@@ -50,8 +50,7 @@ port map (
     video       => videoG0,
     ps2_data    => '1',
     ps2_clk     => '1',
-    rxd         => uart_rx,
-    txd         => open
+    rxd         => uart_rx
 );
 
 videoG  <= "11111111" when videoG0 = '1' else "00000000";

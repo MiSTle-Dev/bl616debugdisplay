@@ -9,8 +9,8 @@ module vt52 (
             output led,
             input  ps2_data,
             input  ps2_clk,
-            input  rxd,
-            output txd
+            input  rxd
+
             );
    localparam ROWS = 25;
    localparam COLS = 80;
@@ -122,22 +122,18 @@ sync_signal_inst (
     .out({uart_rxd_int})
 );
 
+wire fifo_full;
    uart uart(
                  .clk(pixel_clk),
                  .rst(~pll_lock),
                  .rxd(uart_rxd_int), 
-                 .txd(),
 
-                 .s_axis_tdata(8'd0),  // keyboard
-                 .s_axis_tvalid(1'b0),  //keyboard
-                 .s_axis_tready(),  // keyboard
-
-                 // uart pipeline out (usb->command_handler)
+                 // uart pipeline out
                  .m_axis_tdata(uart_out_data),   // out
                  .m_axis_tvalid(uart_out_valid), // out
-                 .m_axis_tready(wfull), // in uart_out_ready
+                 .m_axis_tready(fifo_full), // in
                      // status
-                .tx_busy(),
+            
                 .rx_busy(),
                 .rx_overrun_error(),
                 .rx_frame_error(),
@@ -150,11 +146,11 @@ wire fifo_valid, fifo_ready;
 
  fifo_async #(
     .DW(8),
-    .EA(16))
+    .EA(128))
  fifo_async(
     .i_rstn(pll_lock),
     .i_clk(pixel_clk),
-    .i_tready(wfull),
+    .i_tready(fifo_full),
     .i_tvalid(uart_out_valid),
     .i_tdata(uart_out_data),
 

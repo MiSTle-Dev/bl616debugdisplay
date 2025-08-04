@@ -33,12 +33,15 @@ assign pixel_clk = pix_clk_5x;
     .clkin(CLK)
 );
 
-    DVI_CLKDIV clockdiv(
-        .clkout(pix_clk), //output clkout
-        .hclkin(pix_clk_5x), //input hclkin
-        .resetn(clk_lock), //input resetn
-        .calib(1'b0) //input calib
+
+    CLKDIV clkdiv_inst (
+        .CLKOUT(pix_clk),
+        .HCLKIN(pix_clk_5x), 
+        .RESETN(clk_lock),
+        .CALIB(1'b0)
     );
+defparam clkdiv_inst.DIV_MODE = "5";
+
 
     // Display Timings
     wire signed [15:0] sx;          // horizontal screen position (signed)
