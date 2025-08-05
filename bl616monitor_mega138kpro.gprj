@@ -3,7 +3,7 @@
 <Project>
     <Template>FPGA</Template>
     <Version>5</Version>
-    <Device name="GW5AST-138B" pn="GW5AST-LV138PG484AC1/I0">gw5ast138b-011</Device>
+    <Device name="GW5AST-138B" pn="GW5AST-LV138FPG676AC1/I0">gw5ast138b-007</Device>
     <FileList>
         <File path="src/async_reset.v" type="file.verilog" enable="1"/>
         <File path="src/char_buffer.v" type="file.verilog" enable="1"/>
@@ -18,15 +18,15 @@
         <File path="src/serializer_10to1.v" type="file.verilog" enable="1"/>
         <File path="src/simple_register.v" type="file.verilog" enable="1"/>
         <File path="src/sync_signal.v" type="file.verilog" enable="1"/>
-        <File path="src/tang/console138k/pll_126m.v" type="file.verilog" enable="1"/>
-        <File path="src/tang/console138k/pll_160m.v" type="file.verilog" enable="1"/>
+        <File path="src/tang/mega138kpro/pll_126m.v" type="file.verilog" enable="1"/>
+        <File path="src/tang/mega138kpro/pll_160m.v" type="file.verilog" enable="1"/>
         <File path="src/tmds_encoder_dvi.v" type="file.verilog" enable="1"/>
         <File path="src/uart.v" type="file.verilog" enable="1"/>
         <File path="src/uart_rx.v" type="file.verilog" enable="1"/>
         <File path="src/video_generator.v" type="file.verilog" enable="1"/>
         <File path="src/vt52.v" type="file.verilog" enable="1"/>
         <File path="src/bl616monitor.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/tang/console138k/bl616monitor.cst" type="file.cst" enable="1"/>
+        <File path="src/tang/mega138kpro/bl616monitor.cst" type="file.cst" enable="1"/>
         <File path="mem/empty.hex" type="file.other" enable="1"/>
         <File path="mem/terminus_816_latin1.hex" type="file.other" enable="1"/>
     </FileList>

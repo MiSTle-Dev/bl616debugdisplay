@@ -27,7 +27,7 @@ assign pll_lock = clk_lock;
 
     pll_126m pll_126m(
     .lock(clk_lock), 
-    .clkout0(pix_clk_5x), 
+    .clkout(pix_clk_5x), 
     .clkin(CLK)
 );
 
