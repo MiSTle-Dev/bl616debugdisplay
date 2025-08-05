@@ -115,7 +115,7 @@ module vt52 (
    wire lock, clk160m;
    pll_160m pll_160m(
       .lock(lock),
-      .clkout0(clk160m),
+      .clkout(clk160m),
       .clkin(clk_in)
    );
 

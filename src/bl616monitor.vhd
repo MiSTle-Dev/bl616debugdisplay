@@ -32,18 +32,11 @@ signal clk160m      : std_logic;
 
 begin
 
-pll_inst:entity work.Gowin_PLL_160
-    port map (
-        lock => open,
-        clkout0 => clk160m,
-        clkin => clk_in
-    );
-
 vt52inst : entity work.vt52
 port map (
+    clk_in      => clk_in,
     clk         => dviclk, -- 25.2Mhz 
     pll_lock    => pll_lock,
-    pixel_clk   => clk160m, -- 160Mhz
     start       => framestart,
     hsync       => hSync,
     vsync       => vSync,
@@ -59,7 +52,6 @@ dvi1 : entity work.display_dvi
 port map
 (
     CLK             => clk_in,
-    pixel_clk       => pixel_clk,
     hdmi_tx_clk_n   => tmds_clk_n,
     hdmi_tx_clk_p   => tmds_clk_p,
     hdmi_tx_n       => tmds_d_n,
