@@ -38,6 +38,13 @@ module uart #
     input                     rst,
  
     /*
+     * AXI input
+     */
+    input  [DATA_WIDTH-1:0]  s_axis_tdata,
+    input                    s_axis_tvalid,
+    output                   s_axis_tready,
+
+    /*
      * AXI output
      */
     output  [DATA_WIDTH-1:0]  m_axis_tdata,
@@ -48,10 +55,11 @@ module uart #
      * UART interface
      */
     input                       rxd,
-
+    output                      txd,
     /*
      * Status
      */
+    output                    tx_busy,
     output                    rx_busy,
     output                    rx_overrun_error,
     output                    rx_frame_error,
@@ -63,6 +71,23 @@ module uart #
 
 );
 
+uart_tx #(
+    .DATA_WIDTH(DATA_WIDTH)
+)
+uart_tx_inst (
+    .clk(clk),
+    .rst(rst),
+    // axi input
+    .s_axis_tdata(s_axis_tdata),
+    .s_axis_tvalid(s_axis_tvalid),
+    .s_axis_tready(s_axis_tready),
+    // output
+    .txd(txd),
+    // status
+    .busy(tx_busy),
+    // configuration
+    .prescale(prescale)
+);
 
 uart_rx #(
     .DATA_WIDTH(DATA_WIDTH)

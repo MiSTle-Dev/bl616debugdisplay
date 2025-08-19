@@ -7,10 +7,10 @@ module vt52 (
             output vsync,
             output video,
             output led,
-            input  ps2_data,
-            input  ps2_clk,
-            input  rxd
-
+            input [7:0] usb_kbd,
+            input kbd_strobe,
+            input  rxd,
+            output txd
             );
    localparam ROWS = 25;
    localparam COLS = 80;
@@ -129,17 +129,34 @@ module vt52 (
       .out({uart_rxd_int})
    );
 
+reg strobe, kbd_strobe_d, kbd_strobe_d1;
+
+always @(posedge clk) begin
+   kbd_strobe_d <= kbd_strobe;
+   kbd_strobe_d1 <= kbd_strobe_d;
+    strobe <= 1'b0;
+    if (!kbd_strobe_d1 && kbd_strobe_d)
+          strobe <= 1'b1;
+    end
+
    wire fifo_full;
    uart uart(
       .clk(clk160m),
       .rst(~lock),
       .rxd(uart_rxd_int),
 
+      .txd(txd),
+       // uart pipeline in (keyboard->usb)
+      .s_axis_tdata(usb_kbd),
+      .s_axis_tvalid(strobe),
+      .s_axis_tready(uart_in_ready),
+
       // uart pipeline out
       .m_axis_tdata(uart_out_data),
       .m_axis_tvalid(uart_out_valid),
       .m_axis_tready(fifo_full),
       // status
+      .tx_busy(),
       .rx_busy(),
       .rx_overrun_error(),
       .rx_frame_error(),
