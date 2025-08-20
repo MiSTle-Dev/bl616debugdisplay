@@ -1,5 +1,4 @@
-
-module pll_126m (clkout, lock, clkin);
+module Gowin_rPLL (clkout, lock, clkin);
 
 output clkout;
 output lock;
@@ -32,13 +31,13 @@ rPLL rpll_inst (
 
 defparam rpll_inst.FCLKIN = "27";
 defparam rpll_inst.DYN_IDIV_SEL = "false";
-defparam rpll_inst.IDIV_SEL = 2;
+defparam rpll_inst.IDIV_SEL = 8;
 defparam rpll_inst.DYN_FBDIV_SEL = "false";
-defparam rpll_inst.FBDIV_SEL = 13;
+defparam rpll_inst.FBDIV_SEL = 52;
 defparam rpll_inst.DYN_ODIV_SEL = "false";
 defparam rpll_inst.ODIV_SEL = 4;
 defparam rpll_inst.PSDA_SEL = "0000";
-defparam rpll_inst.DYN_DA_EN = "false";
+defparam rpll_inst.DYN_DA_EN = "true";
 defparam rpll_inst.DUTYDA_SEL = "1000";
 defparam rpll_inst.CLKOUT_FT_DIR = 1'b1;
 defparam rpll_inst.CLKOUTP_FT_DIR = 1'b1;
@@ -53,4 +52,4 @@ defparam rpll_inst.CLKOUTD_SRC = "CLKOUT";
 defparam rpll_inst.CLKOUTD3_SRC = "CLKOUT";
 defparam rpll_inst.DEVICE = "GW2AR-18C";
 
-endmodule //pll_126m
+endmodule //Gowin_rPLL

@@ -13,6 +13,8 @@
         <File path="src/cursor_blinker.v" type="file.verilog" enable="1"/>
         <File path="src/display_timings.v" type="file.verilog" enable="1"/>
         <File path="src/fifo_async.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_dpb/sector_dpram.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_rpll/pll_160m.v" type="file.verilog" enable="1"/>
         <File path="src/hdmi/audio_clock_regeneration_packet.sv" type="file.verilog" enable="1"/>
         <File path="src/hdmi/audio_info_frame.sv" type="file.verilog" enable="1"/>
         <File path="src/hdmi/audio_sample_packet.sv" type="file.verilog" enable="1"/>
@@ -26,6 +28,9 @@
         <File path="src/misc/hid.v" type="file.verilog" enable="1"/>
         <File path="src/misc/mcu_spi.v" type="file.verilog" enable="1"/>
         <File path="src/misc/osd_u8g2.v" type="file.verilog" enable="1"/>
+        <File path="src/misc/sd_card.v" type="file.verilog" enable="1"/>
+        <File path="src/misc/sd_rw.v" type="file.verilog" enable="1"/>
+        <File path="src/misc/sdcmd_ctrl.v" type="file.verilog" enable="1"/>
         <File path="src/misc/sysctrl.v" type="file.verilog" enable="1"/>
         <File path="src/misc/video.v" type="file.verilog" enable="1"/>
         <File path="src/misc/video_analyzer.v" type="file.verilog" enable="1"/>
@@ -39,9 +44,9 @@
         <File path="src/uart_tx.v" type="file.verilog" enable="1"/>
         <File path="src/video_generator.v" type="file.verilog" enable="1"/>
         <File path="src/bl616monitor.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/tang/tn20k/gowin_rpll/gowin_rpll.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tang/tn20k/bl616monitor.cst" type="file.cst" enable="1"/>
         <File path="mem/empty.hex" type="file.other" enable="1"/>
         <File path="mem/terminus_816_latin1.hex" type="file.other" enable="1"/>
+        <File path="src/misc/apple2_xml.hex" type="file.other" enable="1"/>
     </FileList>
 </Project>

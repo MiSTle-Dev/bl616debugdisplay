@@ -50,6 +50,7 @@ signal mcu_data_out   : std_logic_vector(7 downto 0);
 signal hid_data_out   : std_logic_vector(7 downto 0);
 signal osd_data_out   : std_logic_vector(7 downto 0) :=  X"55";
 signal sys_data_out   : std_logic_vector(7 downto 0);
+signal sdc_data_out   : std_logic_vector(7 downto 0);
 signal hid_int        : std_logic;
 signal usb_kbd        : std_logic_vector(7 downto 0);
 signal int_ack        : std_logic_vector(7 downto 0);
@@ -59,6 +60,9 @@ signal mcu_osd_strobe : std_logic;
 signal mcu_start      : std_logic;
 signal kbd_strobe     : std_logic;
 signal ws2812_color   : std_logic_vector(23 downto 0);
+signal sdc_int        : std_logic :='0';
+signal sdc_iack       : std_logic;
+signal mcu_sdc_strobe : std_logic;
 
 component CLKDIV
     generic (
@@ -120,13 +124,13 @@ port map (
   -- byte interface to the various core components
   mcu_sys_strobe => mcu_sys_strobe, -- byte strobe for system control target
   mcu_hid_strobe => mcu_hid_strobe, -- byte strobe for HID target  
-  mcu_osd_strobe => open, -- byte strobe for OSD target
-  mcu_sdc_strobe => open, -- byte strobe for SD card target
+  mcu_osd_strobe => mcu_osd_strobe, -- byte strobe for OSD target
+  mcu_sdc_strobe => mcu_sdc_strobe, -- byte strobe for SD card target
   mcu_start      => mcu_start,
   mcu_sys_din    => sys_data_out,
   mcu_hid_din    => hid_data_out,
   mcu_osd_din    => osd_data_out,
-  mcu_sdc_din    => (others=>'0'),
+  mcu_sdc_din    => sdc_data_out,
   mcu_dout       => mcu_data_out
 );
 
@@ -176,7 +180,7 @@ module_inst: entity work.sysctrl
   data_in             => mcu_data_out,
   data_out            => sys_data_out,
   -- values that can be configured by the user
-
+  system_reset        => open,
   -- port io (used to expose rs232)
   port_status         => (others=>'0'),
   port_out_available  => (others=>'0'),
@@ -187,7 +191,7 @@ module_inst: entity work.sysctrl
   port_in_data        => open,
 
   int_out_n           => int_out_n,
-  int_in              => unsigned'(x"0" & '0' & '0' & hid_int & '0'),
+  int_in              => unsigned'(x"0" & sdc_int & '0' & hid_int & '0'),
   int_ack             => int_ack,
 
   buttons             => unsigned'(reset & user),
@@ -247,6 +251,50 @@ port map (
 );
 
 videoG  <= "1111" when videoG0 = '1' else "0000";
+
+sdc_iack <= int_ack(3);
+
+sd_card_inst: entity work.sd_card
+generic map (
+    CLK_DIV  => 1
+  )
+    port map (
+    rstn            => pll_lock,
+    clk             => dviclk,
+  
+    -- SD card signals
+    sdclk           => open, --sd_clk,
+    sdcmd           => open, --sd_cmd,
+    sddat           => open, --sd_dat,
+
+    -- mcu interface
+    data_strobe     => mcu_sdc_strobe,
+    data_start      => mcu_start,
+    data_in         => mcu_data_out,
+    data_out        => sdc_data_out,
+
+    -- interrupt to signal communication request
+    irq             => sdc_int,
+    iack            => sdc_iack,
+
+    -- output file/image information. Image size is e.g. used by fdc to 
+    -- translate between sector/track/side and lba sector
+    image_size      => open,
+    image_mounted   => open,
+
+    -- user read sector command interface (sync with clk)
+    rstart          => "00000",
+    wstart          => "00000", 
+    rsector         => (others=>'0'),
+    rbusy           => open,
+    rdone           => open,
+
+    -- sector data output interface (sync with clk)
+    inbyte          => x"00",        -- sector data output interface (sync with clk)
+    outen           => open, -- when outen=1, a byte of sector content is read out from outbyte
+    outaddr         => open,     -- outaddr from 0 to 511, because the sector size is 512
+    outbyte         => open         -- a byte of sector content
+);
 
 
 end;
