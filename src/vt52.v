@@ -1,10 +1,11 @@
 module vt52 (
             input clk,
             input clk_in,
-            input pll_lock,
-            input start,
+            input lock,
             output hsync,
             output vsync,
+            output vblank,
+            output hblank,
             output video,
             output led,
             input [7:0] usb_kbd,
@@ -18,7 +19,6 @@ module vt52 (
    localparam COL_BITS = 7;
    localparam ADDR_BITS = 11;
 
-   wire hs_clk;
 
    // scroll
    wire [ADDR_BITS-1:0] new_first_char;
@@ -41,14 +41,9 @@ module vt52 (
    wire [11:0] char_rom_address;
    wire [7:0] char_rom_data;
 
-   // video generator
-   wire vblank, hblank;
-
    // uart input/output
    wire [7:0] uart_out_data;
    wire uart_out_valid;
- //  wire uart_out_ready;
-   reg uart_out_ready;
 
    wire [7:0] uart_in_data;
    wire uart_in_valid;
@@ -59,10 +54,18 @@ module vt52 (
 
    //
    // Instantiate all modules
+//   keyboard keyboard(.clk(clk_usb),
+//                     .reset(reset_usb),
+//                     .ps2_data(ps2_data),
+//                     .ps2_clk(ps2_clk),
+//                     .data(uart_in_data),
+//                     .valid(uart_in_valid),
+//                     .ready(uart_in_ready)
+//                   );
 
    cursor #(.ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS))
       cursor(.clk(clk),
-             .reset(~pll_lock),
+             .reset(~lock),
              .tick(vblank),
              .x(cursor_x),
              .y(cursor_y),
@@ -74,7 +77,7 @@ module vt52 (
 
    simple_register #(.SIZE(ADDR_BITS))
       scroll_register(.clk(clk),
-                      .reset(~pll_lock),
+                      .reset(~lock),
                       .idata(new_first_char),
                       .wen(new_first_char_wen),
                       .odata(first_char)
@@ -95,8 +98,7 @@ module vt52 (
 
    video_generator video_generator(
                       .clk(clk),
-                      .reset(~pll_lock),
-                      .start(start),
+                      .reset(~lock),
                       .hsync(hsync),
                       .vsync(vsync),
                       .video(video),
@@ -112,9 +114,9 @@ module vt52 (
                       .char_rom_data(char_rom_data)
                       );
 
-   wire lock, clk160m;
+   wire pll_lock, clk160m;
    pll_160m pll_160m(
-      .lock(lock),
+      .lock(pll_lock),
       .clkout0(clk160m),
       .clkin(clk_in)
    );
@@ -142,7 +144,7 @@ always @(posedge clk) begin
    wire fifo_full;
    uart uart(
       .clk(clk160m),
-      .rst(~lock),
+      .rst(~lock || ~pll_lock),
       .rxd(uart_rxd_int),
 
       .txd(txd),
@@ -171,7 +173,7 @@ always @(posedge clk) begin
       .DW(8),
       .EA(128))
    fifo_async(
-      .i_rstn(lock),
+      .i_rstn(lock && pll_lock),
       .i_clk(clk160m),
       .i_tready(fifo_full),
       .i_tvalid(uart_out_valid),
@@ -190,7 +192,7 @@ always @(posedge clk) begin
                      .COL_BITS(COL_BITS),
                      .ADDR_BITS(ADDR_BITS))
       command_handler(.clk(clk),
-                      .reset(~pll_lock),
+                      .reset(~lock),
                       .data(fifo_data),
                       .valid(fifo_valid),
                       .ready(fifo_ready),

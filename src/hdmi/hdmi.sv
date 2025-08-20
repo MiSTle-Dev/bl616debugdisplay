@@ -68,18 +68,17 @@ logic [1:0] invert;
 // actual data to be displayed, the start value indicated the number of
 // (black) pixels before the active area starts
 
-// c64 mode table
 //                         start     frame   screen s_start   s_len
 // NTSC
-wire [55:0] htiming0  = { 11'd0,  12'd1040, 11'd768, 11'd24, 11'd72 }; 
-wire [55:0] whtiming0 = { 11'd40, 12'd1040, 11'd928, 11'd16, 11'd32 };  
-wire [39:0] vtiming0  = {         10'd522,  10'd480, 10'd9,  10'd6 };
+wire [55:0] htiming0  = { 11'd0,  12'd800, 11'd640, 11'd24, 11'd72 }; 
+wire [55:0] whtiming0 = { 11'd40, 12'd800, 11'd640, 11'd16, 11'd32 };  
+wire [39:0] vtiming0  = {         10'd526,  10'd400, 10'd9,  10'd6 };
 wire [7:0] cea0 = 8'd2; // CEA is HDMI mode in group 1
    
 // PAL
-wire [54:0] htiming1  = { 11'd0,  12'd1136, 11'd832, 11'd24, 11'd72 };  
-wire [54:0] whtiming1 = { 11'd60, 12'd1136, 11'd952, 11'd16, 11'd32 };  
-wire [39:0] vtiming1  = {          10'd624, 10'd576,  10'd5,  10'd5 };
+wire [54:0] htiming1  = { 11'd0,  12'd800, 11'd640, 11'd24, 11'd72 };
+wire [54:0] whtiming1 = { 11'd60, 12'd800, 11'd640, 11'd16, 11'd32 };
+wire [39:0] vtiming1  = {         10'd450, 10'd400, 10'd5 , 10'd5 };
 wire [7:0] cea1 = 8'd17;
    
 // MONO    640x400@71hz  aspect 1.6    

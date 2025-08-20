@@ -4,7 +4,6 @@
 module video_generator
    (input clk,
     input reset,
-    input  start,
     // video output
     output reg hsync,
     output reg vsync,
@@ -30,6 +29,7 @@ module video_generator
    // from http://tinyvga.com/vga-timing/640x400@70Hz
    // Total size, visible size, front and back porches and sync pulse size
    // clk is 24Mhz (half USB...), so about what we need (around 25Mhz)
+
    localparam hbits = 10;
    localparam hpixels = 799;
    localparam hbp = 48 + 96 + 15;       //DVI is odd and wants everything at the end?
@@ -85,7 +85,7 @@ module video_generator
    // horizontal & vertical counters, syncs and blanks
    //
    always @(posedge clk) begin
-      if (reset || start) begin
+      if (reset) begin
          hc <= 0;
          vc <= 0;
          hsync <= hsync_off;
@@ -122,7 +122,7 @@ module video_generator
    // character generation
    //
    always @(posedge clk) begin
-      if (reset || start) begin
+      if (reset) begin
          row <= 0;
          col <= 0;
          rowc <= 0;

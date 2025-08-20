@@ -6,6 +6,8 @@ use  IEEE.STD_LOGIC_UNSIGNED.all;
 entity bl616monitor is
 port(
     clk_in          : in std_logic;
+    reset           : in std_logic; -- S2 button
+    user            : in std_logic; -- S1 button
     tmds_clk_p      : out std_logic;
     tmds_clk_n      : out std_logic;
     tmds_d_p        : out std_logic_vector(2 downto 0);
@@ -16,19 +18,23 @@ port(
     spi_csn         : in std_logic;
     spi_dir         : out std_logic;
     spi_dat         : in std_logic;
-    spi_irqn        : out std_logic
+    spi_irqn        : out std_logic;
+    ws2812          : out std_logic
     );
 end bl616monitor;
 
 architecture struct of bl616monitor is
 
 signal videoG0      : std_logic;
-signal videoG       : std_logic_vector(7 downto 0) := "00000000";
+signal videoG       : std_logic_vector(3 downto 0);
 signal hSync        : std_logic;
 signal vSync        : std_logic;
+signal vblank       : std_logic;
+signal hblank       : std_logic;
 signal uartrx       : std_logic;
 signal uarttx       : std_logic;
 signal dviclk       : std_logic;
+signal clk_pixel_x5 : std_logic;
 signal vgaclk       : std_logic;
 signal framestart   : std_logic;
 signal clk_lock     : std_logic;
@@ -52,6 +58,20 @@ signal mcu_hid_strobe : std_logic;
 signal mcu_osd_strobe : std_logic;
 signal mcu_start      : std_logic;
 signal kbd_strobe     : std_logic;
+signal ws2812_color   : std_logic_vector(23 downto 0);
+
+component CLKDIV
+    generic (
+        DIV_MODE : STRING := "2";
+        GSREN: in string := "false"
+    );
+    port (
+        CLKOUT: out std_logic;
+        HCLKIN: in std_logic;
+        RESETN: in std_logic;
+        CALIB: in std_logic
+    );
+end component;
 
 begin
 
@@ -60,6 +80,33 @@ begin
   spi_io_clk  <= spi_sclk;
   spi_dir     <= spi_io_dout;
   spi_irqn    <= int_out_n;
+
+pll_inst: entity work.Gowin_rPLL
+    port map (
+        clkout => clk_pixel_x5,
+        lock   => pll_lock,
+        clkin  => clk_in
+    );
+
+div_inst: CLKDIV
+generic map(
+    DIV_MODE => "5",
+    GSREN    => "false"
+)
+port map(
+    CLKOUT => dviclk,
+    HCLKIN => clk_pixel_x5,
+    RESETN => pll_lock,
+    CALIB  => '0'
+);
+
+led_ws2812: entity work.ws2812
+  port map
+  (
+   clk    => dviclk,
+   color  => ws2812_color,
+   data   => ws2812
+  );
 
 mcu_spi_inst: entity work.mcu_spi 
 port map (
@@ -143,19 +190,55 @@ module_inst: entity work.sysctrl
   int_in              => unsigned'(x"0" & '0' & '0' & hid_int & '0'),
   int_ack             => int_ack,
 
-  buttons             => "00",
+  buttons             => unsigned'(reset & user),
   leds                => open,
-  color               => open
+  color               => ws2812_color
 );
+
+video_inst: entity work.video 
+port map(
+      pll_lock   => pll_lock,
+      clk        => dviclk,
+      clk_pixel_x5 => clk_pixel_x5,
+      audio_div  => (others=>'0'),
+      ntscmode  => '1',
+      vb_in     => vblank,
+      hb_in     => hblank,
+      hs_in_n   => hSync,
+      vs_in_n   => vSync,
+
+      r_in      => "0000",
+      g_in      => videoG,
+      b_in      => "0010",
+
+      audio_l => (others=>'0'),
+      audio_r => (others=>'0'),
+      osd_status => open,
+
+      mcu_start => mcu_start,
+      mcu_osd_strobe => mcu_osd_strobe,
+      mcu_data  => mcu_data_out,
+
+      -- values that can be configure by the user via osd
+      system_wide_screen => '0',
+      system_scanlines => "00",
+      system_volume => "00",
+
+      tmds_clk_n => tmds_clk_n,
+      tmds_clk_p => tmds_clk_p,
+      tmds_d_n   => tmds_d_n,
+      tmds_d_p   => tmds_d_p
+      );
 
 vt52inst : entity work.vt52
 port map (
     clk_in      => clk_in,
-    clk         => dviclk, -- 25.2Mhz 
-    pll_lock    => pll_lock,
-    start       => framestart,
+    clk         => dviclk,
+    lock        => pll_lock,
     hsync       => hSync,
     vsync       => vSync,
+    vblank      => vblank,
+    hblank      => hblank,
     video       => videoG0,
     usb_kbd     => usb_kbd,
     kbd_strobe  => kbd_strobe,
@@ -163,22 +246,7 @@ port map (
     txd         => uart_tx
 );
 
-videoG  <= "11111111" when videoG0 = '1' else "00000000";
+videoG  <= "1111" when videoG0 = '1' else "0000";
 
-dvi1 : entity work.display_dvi
-port map
-(
-    CLK             => clk_in,
-    hdmi_tx_clk_n   => tmds_clk_n,
-    hdmi_tx_clk_p   => tmds_clk_p,
-    hdmi_tx_n       => tmds_d_n,
-    hdmi_tx_p       => tmds_d_p,
-    pll_lock        => pll_lock,
-    red             => "00000000",
-    green           => videoG,
-    blue            => "00100000",
-    dviclk          => dviclk,
-    framestart      => framestart
-);
 
 end;

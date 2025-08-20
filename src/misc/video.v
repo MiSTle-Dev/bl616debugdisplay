@@ -5,8 +5,6 @@ module video (
           input    clk_pixel_x5,
           input    pll_lock,
           input [8:0] audio_div,
-          output   v20_en,
-
           input    ntscmode,
           input    vb_in,
           input    hb_in,
@@ -41,15 +39,6 @@ module video (
    
 /* -------------------- HDMI video and audio -------------------- */
 
-reg vic20_en = 0;
-reg [1:0] div = 0;
-
-always @(negedge clk) begin
-	div <= div + 1'd1;
-	vic20_en <= !div;
-end
-assign v20_en = vic20_en;
-
 // generate 48khz audio clock
 reg clk_audio;
 reg [8:0] aclk_cnt;
@@ -78,43 +67,10 @@ video_analyzer video_analyzer (
    .vreset(vreset)
 );  
 
-wire sd_hs_n, sd_vs_n; 
-wire [5:0] sd_r;
-wire [5:0] sd_g;
-wire [5:0] sd_b;
-  
-scandoubler #(10) scandoubler (
-        // system interface
-        .clk_sys(clk),
-        .bypass(1'b0),      // bypass in ST high/mono
-        .ce_divider(3'd1),
-        .pixel_ena(),
-
-        // scanlines (00-none 01-25% 10-50% 11-75%)
-        .scanlines(system_scanlines),
-
-        // shifter video interface
-        .hb_in(hb_in),
-	    .vb_in(vb_in),
-        .hs_in(hs_in_n),
-        .vs_in(vs_in_n),
-        .r_in( r_in ),
-        .g_in( g_in ),
-        .b_in( b_in ),
-
-        // output interface
-        .hb_out(),
-        .vb_out(),
-        .hs_out(sd_hs_n),
-        .vs_out(sd_vs_n),
-        .r_out(sd_r),
-        .g_out(sd_g),
-        .b_out(sd_b)
-);
 
 wire [5:0] osd_r;
 wire [5:0] osd_g;
-wire [5:0] osd_b;  
+wire [5:0] osd_b;
 
 osd_u8g2 osd_u8g2 (
         .clk(clk),
@@ -124,12 +80,12 @@ osd_u8g2 osd_u8g2 (
         .data_in_start(mcu_start),
         .data_in(mcu_data),
 
-        .hs(sd_hs_n),
-        .vs(sd_vs_n),
+        .hs(hs_in_n),
+        .vs(vs_in_n),
 		     
-        .r_in(sd_r),
-        .g_in(sd_g),
-        .b_in(sd_b),
+        .r_in({r_in,2'b0}),
+        .g_in({g_in,2'b0}),
+        .b_in({b_in,2'b0}),
 		     
         .r_out(osd_r),
         .g_out(osd_g),
