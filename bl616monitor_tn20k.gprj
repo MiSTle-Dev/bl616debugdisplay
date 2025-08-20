@@ -26,7 +26,6 @@
         <File path="src/misc/hid.v" type="file.verilog" enable="1"/>
         <File path="src/misc/mcu_spi.v" type="file.verilog" enable="1"/>
         <File path="src/misc/osd_u8g2.v" type="file.verilog" enable="1"/>
-        <File path="src/misc/scandoubler.v" type="file.verilog" enable="1"/>
         <File path="src/misc/sysctrl.v" type="file.verilog" enable="1"/>
         <File path="src/misc/video.v" type="file.verilog" enable="1"/>
         <File path="src/misc/video_analyzer.v" type="file.verilog" enable="1"/>
@@ -35,7 +34,6 @@
         <File path="src/sync_signal.v" type="file.verilog" enable="1"/>
         <File path="src/tang/tn20k/pll_160m.v" type="file.verilog" enable="1"/>
         <File path="src/tang/tn20k/vt52.v" type="file.verilog" enable="1"/>
-        <File path="src/tmds_encoder_dvi.v" type="file.verilog" enable="1"/>
         <File path="src/uart.v" type="file.verilog" enable="1"/>
         <File path="src/uart_rx.v" type="file.verilog" enable="1"/>
         <File path="src/uart_tx.v" type="file.verilog" enable="1"/>
