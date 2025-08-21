@@ -19,6 +19,12 @@ port(
     spi_dir         : out std_logic;
     spi_dat         : in std_logic;
     spi_irqn        : out std_logic;
+    sd_clk          : out std_logic;
+    sd_cmd          : inout std_logic;
+    sd_dat          : inout std_logic_vector(3 downto 0);
+    -- monitor port
+    bl616_mon_tx    : out std_logic;
+    bl616_mon_rx    : in std_logic;
     ws2812          : out std_logic
     );
 end bl616monitor;
@@ -63,6 +69,7 @@ signal ws2812_color   : std_logic_vector(23 downto 0);
 signal sdc_int        : std_logic :='0';
 signal sdc_iack       : std_logic;
 signal mcu_sdc_strobe : std_logic;
+signal uart_tx_terminal : std_logic;
 
 component CLKDIV
     generic (
@@ -78,6 +85,10 @@ component CLKDIV
 end component;
 
 begin
+
+  -- BL616 console to hw pins for external USB-UART adapter
+  uart_tx <= bl616_mon_rx and uart_tx_terminal;
+  bl616_mon_tx <= uart_rx;
 
   spi_io_din  <= spi_dat;
   spi_io_ss   <= spi_csn;
@@ -194,7 +205,7 @@ module_inst: entity work.sysctrl
   int_in              => unsigned'(x"0" & sdc_int & '0' & hid_int & '0'),
   int_ack             => int_ack,
 
-  buttons             => unsigned'(reset & user),
+  buttons             => unsigned'(user & reset),
   leds                => open,
   color               => ws2812_color
 );
@@ -238,7 +249,7 @@ vt52inst : entity work.vt52
 port map (
     clk_in      => clk_in,
     clk         => dviclk,
-    lock        => pll_lock,
+    pll_lock    => pll_lock,
     hsync       => hSync,
     vsync       => vSync,
     vblank      => vblank,
@@ -247,7 +258,7 @@ port map (
     usb_kbd     => usb_kbd,
     kbd_strobe  => kbd_strobe,
     rxd         => uart_rx,
-    txd         => uart_tx
+    txd         => uart_tx_terminal
 );
 
 videoG  <= "1111" when videoG0 = '1' else "0000";
@@ -263,9 +274,9 @@ generic map (
     clk             => dviclk,
   
     -- SD card signals
-    sdclk           => open, --sd_clk,
-    sdcmd           => open, --sd_cmd,
-    sddat           => open, --sd_dat,
+    sdclk           => sd_clk,
+    sdcmd           => sd_cmd,
+    sddat           => sd_dat,
 
     -- mcu interface
     data_strobe     => mcu_sdc_strobe,

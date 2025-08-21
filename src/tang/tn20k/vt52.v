@@ -1,7 +1,7 @@
 module vt52 (
             input clk,
             input clk_in,
-            input lock,
+            input pll_lock,
             output hsync,
             output vsync,
             output vblank,
@@ -65,7 +65,7 @@ module vt52 (
 
    cursor #(.ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS))
       cursor(.clk(clk),
-             .reset(~lock),
+             .reset(~pll_lock),
              .tick(vblank),
              .x(cursor_x),
              .y(cursor_y),
@@ -77,7 +77,7 @@ module vt52 (
 
    simple_register #(.SIZE(ADDR_BITS))
       scroll_register(.clk(clk),
-                      .reset(~lock),
+                      .reset(~pll_lock),
                       .idata(new_first_char),
                       .wen(new_first_char_wen),
                       .odata(first_char)
@@ -98,7 +98,7 @@ module vt52 (
 
    video_generator video_generator(
                       .clk(clk),
-                      .reset(~lock),
+                      .reset(~pll_lock),
                       .hsync(hsync),
                       .vsync(vsync),
                       .video(video),
@@ -114,26 +114,28 @@ module vt52 (
                       .char_rom_data(char_rom_data)
                       );
 
-   wire pll_lock, clk160m;
+   wire lock, clk160m;
+
    pll_160m pll_160m(
-      .lock(pll_lock),
+      .lock(lock),
       .clkout(clk160m),
       .clkin(clk_in)
    );
 
    wire uart_rxd_int;
+
    sync_signal #(
       .WIDTH(1),
       .N(4))
    sync_signal_inst (
       .clk(clk160m),
-      .in({rxd}),
-      .out({uart_rxd_int})
+      .in(rxd),
+      .out(uart_rxd_int)
    );
 
 reg strobe, kbd_strobe_d, kbd_strobe_d1;
 
-always @(posedge clk) begin
+always @(posedge clk160m) begin
    kbd_strobe_d <= kbd_strobe;
    kbd_strobe_d1 <= kbd_strobe_d;
     strobe <= 1'b0;
@@ -144,7 +146,7 @@ always @(posedge clk) begin
    wire fifo_full;
    uart uart(
       .clk(clk160m),
-      .rst(~lock || ~pll_lock),
+      .rst(~lock),
       .rxd(uart_rxd_int),
 
       .txd(txd),
@@ -173,7 +175,7 @@ always @(posedge clk) begin
       .DW(8),
       .EA(128))
    fifo_async(
-      .i_rstn(lock && pll_lock),
+      .i_rstn(lock),
       .i_clk(clk160m),
       .i_tready(fifo_full),
       .i_tvalid(uart_out_valid),
@@ -192,7 +194,7 @@ always @(posedge clk) begin
                      .COL_BITS(COL_BITS),
                      .ADDR_BITS(ADDR_BITS))
       command_handler(.clk(clk),
-                      .reset(~lock),
+                      .reset(~pll_lock),
                       .data(fifo_data),
                       .valid(fifo_valid),
                       .ready(fifo_ready),
