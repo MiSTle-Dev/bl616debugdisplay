@@ -1,6 +1,8 @@
 module vt52 (
             input clk,
             input clk_in,
+            input uart_clk,
+            input uart_lock,
             input pll_lock,
             output hsync,
             output vsync,
@@ -114,28 +116,20 @@ module vt52 (
                       .char_rom_data(char_rom_data)
                       );
 
-   wire lock, clk160m;
-
-   pll_160m pll_160m(
-      .lock(lock),
-      .clkout(clk160m),
-      .clkin(clk_in)
-   );
-
    wire uart_rxd_int;
 
    sync_signal #(
       .WIDTH(1),
       .N(4))
    sync_signal_inst (
-      .clk(clk160m),
+      .clk(uart_clk),
       .in(rxd),
       .out(uart_rxd_int)
    );
 
 reg strobe, kbd_strobe_d, kbd_strobe_d1;
 
-always @(posedge clk160m) begin
+always @(posedge uart_clk) begin
    kbd_strobe_d <= kbd_strobe;
    kbd_strobe_d1 <= kbd_strobe_d;
     strobe <= 1'b0;
@@ -145,8 +139,8 @@ always @(posedge clk160m) begin
 
    wire fifo_full;
    uart uart(
-      .clk(clk160m),
-      .rst(~lock),
+      .clk(uart_clk),
+      .rst(~uart_lock),
       .rxd(uart_rxd_int),
 
       .txd(txd),
@@ -165,8 +159,8 @@ always @(posedge clk160m) begin
       .rx_overrun_error(),
       .rx_frame_error(),
       //config
-      .prescale(16'd10) //160000000/(2000000*8))
-            );
+      .prescale(16'd4) //64000000/(2000000*8)
+      );
 
    wire [7:0] fifo_data;
    wire fifo_valid, fifo_ready;
@@ -175,13 +169,13 @@ always @(posedge clk160m) begin
       .DW(8),
       .EA(128))
    fifo_async(
-      .i_rstn(lock),
-      .i_clk(clk160m),
+      .i_rstn(uart_lock),
+      .i_clk(uart_clk),
       .i_tready(fifo_full),
       .i_tvalid(uart_out_valid),
       .i_tdata(uart_out_data),
 
-      .o_rstn(lock),
+      .o_rstn(uart_lock),
       .o_clk(clk),
       .o_tready(fifo_ready),
       .o_tvalid(fifo_valid),

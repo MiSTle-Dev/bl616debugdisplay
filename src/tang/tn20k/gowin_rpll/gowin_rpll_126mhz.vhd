@@ -1,15 +1,24 @@
+--Copyright (C)2014-2024 Gowin Semiconductor Corporation.
+--All rights reserved.
+--File Title: IP file
+--Tool Version: V1.9.10.03 (64-bit)
+--Part Number: GW2AR-LV18QN88C8/I7
+--Device: GW2AR-18
+--Device Version: C
+--Created Time: Thu Aug 21 21:12:57 2025
+
 library IEEE;
 use IEEE.std_logic_1164.all;
 
-entity Gowin_rPLL is
+entity Gowin_rPLL_126mhz is
     port (
         clkout: out std_logic;
         lock: out std_logic;
         clkin: in std_logic
     );
-end Gowin_rPLL;
+end Gowin_rPLL_126mhz;
 
-architecture Behavioral of Gowin_rPLL is
+architecture Behavioral of Gowin_rPLL_126mhz is
 
     signal clkoutp_o: std_logic;
     signal clkoutd_o: std_logic;
@@ -120,4 +129,4 @@ begin
             FDLY => FDLY_i
         );
 
-end Behavioral; --Gowin_rPLL
+end Behavioral; --Gowin_rPLL_126mhz

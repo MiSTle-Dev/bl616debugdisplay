@@ -70,6 +70,8 @@ signal sdc_int        : std_logic :='0';
 signal sdc_iack       : std_logic;
 signal mcu_sdc_strobe : std_logic;
 signal uart_tx_terminal : std_logic;
+signal uart_clk       : std_logic;
+signal uart_lock      : std_logic;
 
 component CLKDIV
     generic (
@@ -96,7 +98,7 @@ begin
   spi_dir     <= spi_io_dout;
   spi_irqn    <= int_out_n;
 
-pll_inst: entity work.Gowin_rPLL
+pll_inst: entity work.Gowin_rPLL_126mhz
     port map (
         clkout => clk_pixel_x5,
         lock   => pll_lock,
@@ -245,9 +247,18 @@ port map(
       tmds_d_p   => tmds_d_p
       );
 
+uart_pll: entity work.Gowin_rPLL_63mhz
+    port map (
+        clkout => uart_clk,
+        lock   => uart_lock,
+        clkin  => clk_in
+    );
+
 vt52inst : entity work.vt52
 port map (
     clk_in      => clk_in,
+    uart_clk    => uart_clk,
+    uart_lock   => uart_lock,
     clk         => dviclk,
     pll_lock    => pll_lock,
     hsync       => hSync,

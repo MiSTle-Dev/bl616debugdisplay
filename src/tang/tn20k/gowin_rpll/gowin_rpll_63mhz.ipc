@@ -1,7 +1,7 @@
 [General]
 ipc_version=4
-file=gowin_rpll
-module=Gowin_rPLL
+file=gowin_rpll_63mhz
+module=Gowin_rPLL_63mhz
 target_device=gw2ar18c-000
 type=clock_rpll
 version=1.0
@@ -13,12 +13,12 @@ CLKIN_FREQ=27
 CLKOUTD=false
 CLKOUTP=false
 CLKOUT_BYPASS=false
-CLKOUT_DIVIDE_DYN=false
+CLKOUT_DIVIDE_DYN=true
+CLKOUT_FREQ=63
+CLKOUT_TOLERANCE=0
 DYNAMIC=false
 LANG=1
 LOCK_EN=true
 MODE_GENERAL=true
 PLL_PWD=false
 RESET_PLL=false
-CLKOUT_FREQ=126
-CLKOUT_TOLERANCE=0
