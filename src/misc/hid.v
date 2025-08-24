@@ -2,8 +2,6 @@
     hid.v
  
     hid (keyboard, mouse etc) interface to the IO MCU
-
-    Appl2 IIe core specific variant of hid
   */
 
 module hid (
@@ -14,6 +12,7 @@ module hid (
   input               data_in_start,
   input [7:0]         data_in,
   output reg [7:0]    data_out,
+  output [7:0]        asc2key,
 
   // input local db9 port events to be sent to MCU
   input  [5:0]        db9_port,
@@ -39,14 +38,20 @@ module hid (
   output reg [7:0]    extra_button1
 );
 
-
 reg [3:0] state;
 reg [7:0] command;
 reg [7:0] device;   // used for joystick
 reg irq_enable;
 reg [5:0] db9_portD;
 reg [5:0] db9_portD2;
-reg kbd_trigger;
+
+wire [6:0] keycode;
+assign asc2key = { kbd_strobe, keycode };
+
+keymap keymap (
+ .code ( usb_kbd[6:0] ),
+ .terminal ( keycode )
+);
 
 always @(posedge clk) begin
    if(reset) begin

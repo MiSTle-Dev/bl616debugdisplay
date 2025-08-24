@@ -76,8 +76,7 @@ signal asc2key        : std_logic_vector(7 downto 0);
 
 component CLKDIV
     generic (
-        DIV_MODE : STRING := "2";
-        GSREN: in string := "false"
+        DIV_MODE : STRING := "2"
     );
     port (
         CLKOUT: out std_logic;
@@ -101,15 +100,14 @@ begin
 
 pll_inst: entity work.Gowin_rPLL_126mhz
     port map (
-        clkout => clk_pixel_x5,
+        clkout0 => clk_pixel_x5,
         lock   => pll_lock,
         clkin  => clk_in
     );
 
 div_inst: CLKDIV
 generic map(
-    DIV_MODE => "5",
-    GSREN    => "false"
+    DIV_MODE => "5"
 )
 port map(
     CLKOUT => dviclk,
@@ -251,7 +249,7 @@ port map(
 
 uart_pll: entity work.Gowin_rPLL_63mhz
     port map (
-        clkout => uart_clk,
+        clkout0 => uart_clk,
         lock   => uart_lock,
         clkin  => clk_in
     );
