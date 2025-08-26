@@ -168,7 +168,6 @@ hid_inst: entity work.hid
   -- output HID data received from USB
   usb_kbd         => usb_kbd,
   kbd_strobe      => kbd_strobe,
-  asc2key         => asc2key,
   joystick0       => open,
   joystick1       => open,
   mouse_btns      => open,

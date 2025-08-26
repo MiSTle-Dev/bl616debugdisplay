@@ -47,23 +47,21 @@ module vt52 (
    wire [7:0] uart_out_data;
    wire uart_out_valid;
 
-   wire [7:0] uart_in_data;
-   wire uart_in_valid;
+   reg [7:0] uart_in_data, uart_in_data_d,uart_in_data_d1;
+   reg uart_in_valid, uart_in_valid_d, uart_in_valid_d1;
    wire uart_in_ready;
 
    // led follows the cursor blink
    assign led = cursor_blink_on;
 
-   //
-   // Instantiate all modules
-//   keyboard keyboard(.clk(clk_usb),
-//                     .reset(reset_usb),
-//                     .ps2_data(ps2_data),
-//                     .ps2_clk(ps2_clk),
-//                     .data(uart_in_data),
-//                     .valid(uart_in_valid),
-//                     .ready(uart_in_ready)
-//                   );
+   keyboard keyboard(.clk(clk),
+                     .reset(~pll_lock),
+                     .usb_kbd(usb_kbd),
+                     .kbd_strobe(kbd_strobe),
+                     .data(uart_in_data),
+                     .valid(uart_in_valid),
+                     .ready(1'b1) //uart_in_ready)
+                   );
 
    cursor #(.ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS))
       cursor(.clk(clk),
@@ -127,13 +125,14 @@ module vt52 (
       .out(uart_rxd_int)
    );
 
-reg strobe, kbd_strobe_d, kbd_strobe_d1;
+reg strobe;
 
 always @(posedge uart_clk) begin
-   kbd_strobe_d <= kbd_strobe;
-   kbd_strobe_d1 <= kbd_strobe_d;
+   {uart_in_data_d1 , uart_in_data_d}  <= {uart_in_data_d , uart_in_data};
+   {uart_in_valid_d1, uart_in_valid_d} <= {uart_in_valid_d, uart_in_valid};
+
     strobe <= 1'b0;
-    if (!kbd_strobe_d1 && kbd_strobe_d)
+    if (!uart_in_valid_d1 && uart_in_valid_d)
           strobe <= 1'b1;
     end
 
@@ -145,7 +144,7 @@ always @(posedge uart_clk) begin
 
       .txd(txd),
        // uart pipeline in (keyboard->usb)
-      .s_axis_tdata(usb_kbd),
+      .s_axis_tdata(uart_in_data),
       .s_axis_tvalid(strobe),
       .s_axis_tready(uart_in_ready),
 
