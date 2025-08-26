@@ -50,6 +50,5 @@
         <File path="src/tang/tn20k/bl616monitor.cst" type="file.cst" enable="1"/>
         <File path="mem/empty.hex" type="file.other" enable="1"/>
         <File path="mem/terminus_816_latin1.hex" type="file.other" enable="1"/>
-        <File path="src/misc/apple2_xml.hex" type="file.other" enable="1"/>
     </FileList>
 </Project>

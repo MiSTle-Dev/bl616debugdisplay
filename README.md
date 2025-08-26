@@ -26,7 +26,10 @@ Keyboard / Mouse will not show any press/move message apart from initial registe
 Note:  
 You can enter with you keyboard commands like ``help`` or ``lsusb``  
 
-Press Tang Button S2  to observe µC at boot time.  
+Press Tang Button S2 to observe µC at boot time.  
 
 
 ![bl616](\.assets/bl616_debug.png) 
+
+# Credits
+Uses sources from [vt52](https://github.com/AndresNavarro82/vt52-fpga)  

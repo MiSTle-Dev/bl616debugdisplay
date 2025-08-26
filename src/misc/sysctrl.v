@@ -90,13 +90,13 @@ reg [11:0] menu_rom_addr;
 reg [7:0]  menu_rom_data;
 
 // generate hex e.g.:
-// gzip -n apple2.xml
-// xxd -c1 -p apple2.xml.gz > apple2_xml.hex
-reg [7:0] apple2_xml[2048];
-initial $readmemh("apple2_xml.hex", apple2_xml);
+// gzip -n terminal.xml
+// xxd -c1 -p terminal.xml.gz > terminal_xml.hex
+reg [7:0] terminal_xml[2048];
+initial $readmemh("terminal_xml.hex", terminal_xml);
 
 always @(posedge clk)
-  menu_rom_data <= apple2_xml[menu_rom_addr];
+  menu_rom_data <= terminal_xml[menu_rom_addr];
 
 // process mouse events
 always @(posedge clk) begin

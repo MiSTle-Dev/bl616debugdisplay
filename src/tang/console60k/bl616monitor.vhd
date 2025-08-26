@@ -24,12 +24,12 @@ port(
     sd_dat          : inout std_logic_vector(3 downto 0);
     -- monitor port
     bl616_mon_tx    : out std_logic;
-    bl616_mon_rx    : in std_logic;
-    ws2812          : out std_logic
+    bl616_mon_rx    : in std_logic
     );
 end bl616monitor;
 
 architecture struct of bl616monitor is
+signal ws2812       : std_logic;
 
 signal videoG0      : std_logic;
 signal videoG       : std_logic_vector(3 downto 0);
@@ -166,7 +166,6 @@ hid_inst: entity work.hid
   -- output HID data received from USB
   usb_kbd         => usb_kbd,
   kbd_strobe      => kbd_strobe,
-  asc2key         => asc2key,
   joystick0       => open,
   joystick1       => open,
   mouse_btns      => open,
@@ -207,7 +206,7 @@ module_inst: entity work.sysctrl
   int_in              => unsigned'(x"0" & sdc_int & '0' & hid_int & '0'),
   int_ack             => int_ack,
 
-  buttons             => unsigned'(user & reset),
+  buttons             => unsigned'(not user & not reset), -- S2 and S1 buttons
   leds                => open,
   color               => ws2812_color
 );
