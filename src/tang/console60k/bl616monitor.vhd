@@ -24,12 +24,12 @@ port(
     sd_dat          : inout std_logic_vector(3 downto 0);
     -- monitor port
     bl616_mon_tx    : out std_logic;
-    bl616_mon_rx    : in std_logic;
-    ws2812          : out std_logic
+    bl616_mon_rx    : in std_logic
     );
 end bl616monitor;
 
 architecture struct of bl616monitor is
+signal ws2812       : std_logic;
 
 signal videoG0      : std_logic;
 signal videoG       : std_logic_vector(3 downto 0);
@@ -76,8 +76,7 @@ signal system_reset   : std_logic_vector(1 downto 0);
 
 component CLKDIV
     generic (
-        DIV_MODE : STRING := "2";
-        GSREN: in string := "false"
+        DIV_MODE : STRING := "2"
     );
     port (
         CLKOUT: out std_logic;
@@ -101,15 +100,14 @@ begin
 
 pll_inst: entity work.Gowin_rPLL_126mhz
     port map (
-        clkout => clk_pixel_x5,
+        clkout0 => clk_pixel_x5,
         lock   => pll_lock,
         clkin  => clk_in
     );
 
 div_inst: CLKDIV
 generic map(
-    DIV_MODE => "5",
-    GSREN    => "false"
+    DIV_MODE => "5"
 )
 port map(
     CLKOUT => dviclk,
@@ -208,7 +206,7 @@ module_inst: entity work.sysctrl
   int_in              => unsigned'(x"0" & sdc_int & '0' & hid_int & '0'),
   int_ack             => int_ack,
 
-  buttons             => unsigned'(user & reset),
+  buttons             => unsigned'(not user & not reset), -- S2 and S1 buttons
   leds                => open,
   color               => ws2812_color
 );
@@ -250,7 +248,7 @@ port map(
 
 uart_pll: entity work.Gowin_rPLL_63mhz
     port map (
-        clkout => uart_clk,
+        clkout0 => uart_clk,
         lock   => uart_lock,
         clkin  => clk_in
     );

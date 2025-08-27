@@ -1,16 +1,19 @@
 module vt52 (
             input clk,
             input clk_in,
+            input uart_clk,
+            input uart_lock,
             input pll_lock,
-            input start,
             output hsync,
             output vsync,
+            output vblank,
+            output hblank,
             output video,
             output led,
-            input  ps2_data,
-            input  ps2_clk,
-            input  rxd
-
+            input [7:0] usb_kbd,
+            input kbd_strobe,
+            input  rxd,
+            output txd
             );
    localparam ROWS = 25;
    localparam COLS = 80;
@@ -18,7 +21,6 @@ module vt52 (
    localparam COL_BITS = 7;
    localparam ADDR_BITS = 11;
 
-   wire hs_clk;
 
    // scroll
    wire [ADDR_BITS-1:0] new_first_char;
@@ -41,24 +43,25 @@ module vt52 (
    wire [11:0] char_rom_address;
    wire [7:0] char_rom_data;
 
-   // video generator
-   wire vblank, hblank;
-
    // uart input/output
    wire [7:0] uart_out_data;
    wire uart_out_valid;
- //  wire uart_out_ready;
-   reg uart_out_ready;
 
-   wire [7:0] uart_in_data;
-   wire uart_in_valid;
+   reg [7:0] uart_in_data, uart_in_data_d,uart_in_data_d1;
+   reg uart_in_valid, uart_in_valid_d, uart_in_valid_d1;
    wire uart_in_ready;
 
    // led follows the cursor blink
    assign led = cursor_blink_on;
 
-   //
-   // Instantiate all modules
+   keyboard keyboard(.clk(clk),
+                     .reset(~pll_lock),
+                     .usb_kbd(usb_kbd),
+                     .kbd_strobe(kbd_strobe),
+                     .data(uart_in_data),
+                     .valid(uart_in_valid),
+                     .ready(1'b1) //uart_in_ready)
+                   );
 
    cursor #(.ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS))
       cursor(.clk(clk),
@@ -96,7 +99,6 @@ module vt52 (
    video_generator video_generator(
                       .clk(clk),
                       .reset(~pll_lock),
-                      .start(start),
                       .hsync(hsync),
                       .vsync(vsync),
                       .video(video),
@@ -112,40 +114,52 @@ module vt52 (
                       .char_rom_data(char_rom_data)
                       );
 
-   wire lock, clk160m;
-   pll_160m pll_160m(
-      .lock(lock),
-      .clkout(clk160m),
-      .clkin(clk_in)
-   );
-
    wire uart_rxd_int;
+
    sync_signal #(
       .WIDTH(1),
       .N(4))
    sync_signal_inst (
-      .clk(clk160m),
-      .in({rxd}),
-      .out({uart_rxd_int})
+      .clk(uart_clk),
+      .in(rxd),
+      .out(uart_rxd_int)
    );
+
+reg strobe;
+
+always @(posedge uart_clk) begin
+   {uart_in_data_d1 , uart_in_data_d}  <= {uart_in_data_d , uart_in_data};
+   {uart_in_valid_d1, uart_in_valid_d} <= {uart_in_valid_d, uart_in_valid};
+
+    strobe <= 1'b0;
+    if (!uart_in_valid_d1 && uart_in_valid_d)
+          strobe <= 1'b1;
+    end
 
    wire fifo_full;
    uart uart(
-      .clk(clk160m),
-      .rst(~lock),
+      .clk(uart_clk),
+      .rst(~uart_lock),
       .rxd(uart_rxd_int),
+
+      .txd(txd),
+       // uart pipeline in (keyboard->usb)
+      .s_axis_tdata(uart_in_data),
+      .s_axis_tvalid(strobe),
+      .s_axis_tready(uart_in_ready),
 
       // uart pipeline out
       .m_axis_tdata(uart_out_data),
       .m_axis_tvalid(uart_out_valid),
       .m_axis_tready(fifo_full),
       // status
+      .tx_busy(),
       .rx_busy(),
       .rx_overrun_error(),
       .rx_frame_error(),
       //config
-      .prescale(16'd10) //160000000/(2000000*8))
-            );
+      .prescale(16'd4) //64000000/(2000000*8)
+      );
 
    wire [7:0] fifo_data;
    wire fifo_valid, fifo_ready;
@@ -154,13 +168,13 @@ module vt52 (
       .DW(8),
       .EA(128))
    fifo_async(
-      .i_rstn(lock),
-      .i_clk(clk160m),
+      .i_rstn(uart_lock),
+      .i_clk(uart_clk),
       .i_tready(fifo_full),
       .i_tvalid(uart_out_valid),
       .i_tdata(uart_out_data),
 
-      .o_rstn(lock),
+      .o_rstn(uart_lock),
       .o_clk(clk),
       .o_tready(fifo_ready),
       .o_tvalid(fifo_valid),
