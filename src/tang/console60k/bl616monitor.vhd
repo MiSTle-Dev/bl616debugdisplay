@@ -72,7 +72,7 @@ signal mcu_sdc_strobe : std_logic;
 signal uart_tx_terminal : std_logic;
 signal uart_clk       : std_logic;
 signal uart_lock      : std_logic;
-signal asc2key        : std_logic_vector(7 downto 0);
+signal system_reset   : std_logic_vector(1 downto 0);
 
 component CLKDIV
     generic (
@@ -192,7 +192,7 @@ module_inst: entity work.sysctrl
   data_in             => mcu_data_out,
   data_out            => sys_data_out,
   -- values that can be configured by the user
-  system_reset        => open,
+  system_reset        => system_reset,
   -- port io (used to expose rs232)
   port_status         => (others=>'0'),
   port_out_available  => (others=>'0'),
@@ -259,7 +259,7 @@ port map (
     uart_clk    => uart_clk,
     uart_lock   => uart_lock,
     clk         => dviclk,
-    pll_lock    => pll_lock,
+    pll_lock    => pll_lock, -- and not system_reset(1),
     hsync       => hSync,
     vsync       => vSync,
     vblank      => vblank,
@@ -304,17 +304,17 @@ generic map (
     image_mounted   => open,
 
     -- user read sector command interface (sync with clk)
-    rstart          => "00000",
-    wstart          => "00000", 
+    rstart          => (others=>'0'),
+    wstart          => (others=>'0'), 
     rsector         => (others=>'0'),
     rbusy           => open,
     rdone           => open,
 
     -- sector data output interface (sync with clk)
-    inbyte          => x"00",        -- sector data output interface (sync with clk)
+    inbyte          => (others=>'0'), -- sector data output interface (sync with clk)
     outen           => open, -- when outen=1, a byte of sector content is read out from outbyte
-    outaddr         => open,     -- outaddr from 0 to 511, because the sector size is 512
-    outbyte         => open         -- a byte of sector content
+    outaddr         => open, -- outaddr from 0 to 511, because the sector size is 512
+    outbyte         => open  -- a byte of sector content
 );
 
 

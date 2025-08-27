@@ -32,4 +32,5 @@ Press Tang Button S2 to observe µC at boot time.
 ![bl616](\.assets/bl616_debug.png) 
 
 # Credits
-Uses sources from [vt52](https://github.com/AndresNavarro82/vt52-fpga)  
+Uses sources from [VT52](https://github.com/AndresNavarro82/vt52-fpga)
+

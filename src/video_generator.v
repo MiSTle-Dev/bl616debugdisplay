@@ -25,24 +25,17 @@ module video_generator
     input  [7:0] char_rom_data
     );
    localparam PAST_LAST_ROW = 25 * 80;
-   // VGA Signal 640x480 @ 60 Hz timing
-   // from http://tinyvga.com/vga-timing/640x400@70Hz
-   // Total size, visible size, front and back porches and sync pulse size
-   // clk is 24Mhz (half USB...), so about what we need (around 25Mhz)
-
    localparam hbits = 10;
    localparam hpixels = 799;
-   localparam hbp = 48 + 96 + 15;       //DVI is odd and wants everything at the end?
+   localparam hbp = 48;
    localparam hvisible = 640;
-   localparam hfp = 0;
-   localparam hpulse = 0;//96;
-   // Added 40 to vbp and vfp to compensate for the missing character row
-   // (25 * 16 == 400, we are 80 short)
-   localparam vbits = 10;
-   localparam vlines = 525;
-   localparam vbp = 33 + 40;
+   localparam hfp = 16;
+   localparam hpulse = 96;
+   localparam vbits = 9;
+   localparam vlines = 448;
+   localparam vbp = 35;
    localparam vvisible = 400;
-   localparam vfp = 10 + 40;
+   localparam vfp = 12;
    localparam vpulse = 2;
    // sync polarity
    localparam hsync_on = 1'b0;
