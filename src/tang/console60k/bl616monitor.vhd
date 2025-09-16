@@ -39,14 +39,11 @@ signal vblank       : std_logic;
 signal hblank       : std_logic;
 signal uartrx       : std_logic;
 signal uarttx       : std_logic;
-signal dviclk       : std_logic;
-signal clk_pixel_x5 : std_logic;
-signal vgaclk       : std_logic;
-signal framestart   : std_logic;
-signal clk_lock     : std_logic;
-signal pll_lock     : std_logic;
-signal pixel_clk    : std_logic;
-signal clk160m      : std_logic;
+signal clk_pixel_x10  : std_logic;
+signal clk_pixel_x5   : std_logic;
+signal clk_pixel_x2   : std_logic;
+signal clk_pixel      : std_logic;
+signal pll_lock       : std_logic;
 signal spi_io_din     : std_logic;
 signal spi_io_ss      : std_logic;
 signal spi_io_clk     : std_logic;
@@ -100,33 +97,18 @@ begin
 
 pll_inst: entity work.Gowin_rPLL_126mhz
     port map (
-        clkout0 => clk_pixel_x5,
+        clkout0 => clk_pixel_x10,
+        clkout1 => clk_pixel_x5,
+        clkout2 => uart_clk,
+        clkout3 => clk_pixel_x2,
+        clkout4 => clk_pixel,
         lock   => pll_lock,
         clkin  => clk_in
     );
 
-div_inst: CLKDIV
-generic map(
-    DIV_MODE => "5"
-)
-port map(
-    CLKOUT => dviclk,
-    HCLKIN => clk_pixel_x5,
-    RESETN => pll_lock,
-    CALIB  => '0'
-);
-
-led_ws2812: entity work.ws2812
-  port map
-  (
-   clk    => dviclk,
-   color  => ws2812_color,
-   data   => ws2812
-  );
-
 mcu_spi_inst: entity work.mcu_spi 
 port map (
-  clk            => dviclk,
+  clk            => clk_pixel,
   reset          => not pll_lock,
   -- SPI interface to BL616 MCU
   spi_io_ss      => spi_io_ss,      -- SPI CSn
@@ -150,7 +132,7 @@ port map (
 hid_inst: entity work.hid
  port map 
  (
-  clk             => dviclk,
+  clk             => clk_pixel,
   reset           => not pll_lock,
   -- interface to receive user data from MCU (mouse, kbd, ...)
   data_in_strobe  => mcu_hid_strobe,
@@ -184,7 +166,7 @@ hid_inst: entity work.hid
 module_inst: entity work.sysctrl 
  port map 
  (
-  clk                 => dviclk,
+  clk                 => clk_pixel,
   reset               => not pll_lock,
 --
   data_in_strobe      => mcu_sys_strobe,
@@ -214,7 +196,7 @@ module_inst: entity work.sysctrl
 video_inst: entity work.video 
 port map(
       pll_lock   => pll_lock,
-      clk        => dviclk,
+      clk        => clk_pixel,
       clk_pixel_x5 => clk_pixel_x5,
       audio_div  => (others=>'0'),
       ntscmode  => '1',
@@ -246,25 +228,18 @@ port map(
       tmds_d_p   => tmds_d_p
       );
 
-uart_pll: entity work.Gowin_rPLL_63mhz
-    port map (
-        clkout0 => uart_clk,
-        lock   => uart_lock,
-        clkin  => clk_in
-    );
-
-vt52inst : entity work.vt52
+vt52inst: entity work.vt52
 port map (
-    clk_in      => clk_in,
+    clk         => clk_pixel_x2,
+    clk_pixel   => clk_pixel,
     uart_clk    => uart_clk,
-    uart_lock   => uart_lock,
-    clk         => dviclk,
-    pll_lock    => pll_lock, -- and not system_reset(1),
+    pll_lock    => pll_lock,
     hsync       => hSync,
     vsync       => vSync,
     vblank      => vblank,
     hblank      => hblank,
     video       => videoG0,
+    led         => open,
     usb_kbd     => usb_kbd,
     kbd_strobe  => kbd_strobe,
     rxd         => uart_rx,
@@ -281,7 +256,7 @@ generic map (
   )
     port map (
     rstn            => pll_lock,
-    clk             => dviclk,
+    clk             => clk_pixel,
   
     -- SD card signals
     sdclk           => sd_clk,

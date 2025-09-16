@@ -12,8 +12,8 @@ port(
     tmds_clk_n      : out std_logic;
     tmds_d_p        : out std_logic_vector(2 downto 0);
     tmds_d_n        : out std_logic_vector(2 downto 0);
-    uart_rx         : in std_logic; -- from BL616
-    uart_tx         : out std_logic; -- to BL616
+    uart_rx         : in std_logic;
+    uart_tx         : out std_logic; -- to BL616 via GPIO 12 wire strap
     spi_sclk        : in std_logic;
     spi_csn         : in std_logic;
     spi_dir         : out std_logic;
@@ -22,23 +22,22 @@ port(
     sd_clk          : out std_logic;
     sd_cmd          : inout std_logic;
     sd_dat          : inout std_logic_vector(3 downto 0);
-    -- monitor port
-    bl616_mon_tx    : out std_logic;
-    bl616_mon_rx    : in std_logic;
-    ws2812          : out std_logic
+    bl616_mon_tx    : out std_logic
+  --bl616_mon_rx    : in std_logic
     );
 end bl616monitor;
 
 architecture struct of bl616monitor is
+signal ws2812       : std_logic;
 
-signal videoG0        : std_logic;
-signal videoG         : std_logic_vector(3 downto 0);
-signal hSync          : std_logic;
-signal vSync          : std_logic;
-signal vblank         : std_logic;
-signal hblank         : std_logic;
-signal uartrx         : std_logic;
-signal uarttx         : std_logic;
+signal videoG0      : std_logic;
+signal videoG       : std_logic_vector(3 downto 0);
+signal hSync        : std_logic;
+signal vSync        : std_logic;
+signal vblank       : std_logic;
+signal hblank       : std_logic;
+signal uartrx       : std_logic;
+signal uarttx       : std_logic;
 signal clk_pixel_x10  : std_logic;
 signal clk_pixel_x5   : std_logic;
 signal clk_pixel_x2   : std_logic;
@@ -73,8 +72,7 @@ signal system_reset   : std_logic_vector(1 downto 0);
 
 component CLKDIV
     generic (
-        DIV_MODE : STRING := "2";
-        GSREN: in string := "false"
+        DIV_MODE : STRING := "2"
     );
     port (
         CLKOUT: out std_logic;
@@ -87,7 +85,7 @@ end component;
 begin
 
   -- BL616 console to hw pins for external USB-UART adapter
-  uart_tx <= bl616_mon_rx and uart_tx_terminal;
+  uart_tx <= uart_tx_terminal;
   bl616_mon_tx <= uart_rx;
 
   spi_io_din  <= spi_dat;
@@ -96,61 +94,17 @@ begin
   spi_dir     <= spi_io_dout;
   spi_irqn    <= int_out_n;
 
--- 252Mhz and 126Mhz
-pll_inst: entity work.Gowin_rPLL_126mhz
+pll_inst: entity work.Gowin_PLL_126mhz
     port map (
-        clkout  => clk_pixel_x10,
-        clkoutd => clk_pixel_x5,
+        clkout0 => clk_pixel_x10,
+        clkout1 => clk_pixel_x5,
+        clkout2 => uart_clk,
+        clkout3 => clk_pixel_x2,
+        clkout4 => clk_pixel,
         lock    => pll_lock,
-        clkin   => clk_in
+        clkin   => clk_in,
+        mdclk   => clk_in
     );
-
--- 50.4Mhz
-div_inst: CLKDIV
-generic map(
-    DIV_MODE => "5",
-    GSREN    => "false"
-)
-port map(
-    CLKOUT => clk_pixel_x2,
-    HCLKIN => clk_pixel_x10,
-    RESETN => pll_lock,
-    CALIB  => '0'
-);
-
--- 63Mhz
-div2_inst: CLKDIV
-generic map(
-    DIV_MODE => "2",
-    GSREN    => "false"
-)
-port map(
-    CLKOUT => uart_clk,
-    HCLKIN => clk_pixel_x5,
-    RESETN => pll_lock,
-    CALIB  => '0'
-);
-
--- 25.2 Mhz
-div3_inst: CLKDIV
-generic map(
-    DIV_MODE => "5",
-    GSREN    => "false"
-)
-port map(
-    CLKOUT => clk_pixel,
-    HCLKIN => clk_pixel_x5,
-    RESETN => pll_lock,
-    CALIB  => '0'
-);
-
-led_ws2812: entity work.ws2812
-  port map
-  (
-   clk    => clk_pixel,
-   color  => ws2812_color,
-   data   => ws2812
-  );
 
 mcu_spi_inst: entity work.mcu_spi 
 port map (
@@ -234,9 +188,9 @@ module_inst: entity work.sysctrl
   int_in              => unsigned'(x"0" & sdc_int & '0' & hid_int & '0'),
   int_ack             => int_ack,
 
-  buttons             => unsigned'(user & reset),
+  buttons             => unsigned'(user & reset), -- S2 and S1 buttons
   leds                => open,
-  color               => ws2812_color
+  color               => open
 );
 
 video_inst: entity work.video 
