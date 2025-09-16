@@ -24,12 +24,18 @@ A Joystick or Gamepad button/stick press will generate debug messages.
 Keyboard / Mouse will not show any press/move message apart from initial registering.
 
 Note:  
-You can enter with you keyboard commands like ``help`` or ``lsusb``  
+You can enter with you keyboard commands like ``help`` or ``lsusb`` (lowercase)  
 
 Press Tang Button S2 to observe µC at boot time.  
-
+Press Tang Button S1 to open OSD.  
 
 ![bl616](\.assets/bl616_debug.png) 
+
+# Primer 25k
+UART TX monitoring port is connected to USB-A positive pin.  
+In order that BL616 can receive on uart console there are HW modifications needed:  
+* Capacitor C22 need to be removed to avoid signal integrity issues.  
+* USB-A negative pin need to to be connected to the now freed C22 landing pad signal side. By that an extra connection in between FPGA and BL616 MPU is established while the middle PMOD is still available for two Dualshock 2 gamepads or an retro D9 Joystick.
 
 # Credits
 Uses sources from [VT52](https://github.com/AndresNavarro82/vt52-fpga)

@@ -1,8 +1,7 @@
 module vt52 (
             input clk,
-            input clk_in,
+            input clk_pixel,
             input uart_clk,
-            input uart_lock,
             input pll_lock,
             output hsync,
             output vsync,
@@ -97,7 +96,7 @@ module vt52 (
                      );
 
    video_generator video_generator(
-                      .clk(clk),
+                      .clk(clk_pixel),
                       .reset(~pll_lock),
                       .hsync(hsync),
                       .vsync(vsync),
@@ -139,7 +138,7 @@ always @(posedge uart_clk) begin
    wire fifo_full;
    uart uart(
       .clk(uart_clk),
-      .rst(~uart_lock),
+      .rst(~pll_lock),
       .rxd(uart_rxd_int),
 
       .txd(txd),
@@ -168,13 +167,13 @@ always @(posedge uart_clk) begin
       .DW(8),
       .EA(128))
    fifo_async(
-      .i_rstn(uart_lock),
+      .i_rstn(pll_lock),
       .i_clk(uart_clk),
       .i_tready(fifo_full),
       .i_tvalid(uart_out_valid),
       .i_tdata(uart_out_data),
 
-      .o_rstn(uart_lock),
+      .o_rstn(pll_lock),
       .o_clk(clk),
       .o_tready(fifo_ready),
       .o_tvalid(fifo_valid),

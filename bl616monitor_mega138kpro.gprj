@@ -3,7 +3,7 @@
 <Project>
     <Template>FPGA</Template>
     <Version>5</Version>
-    <Device name="GW5AT-60B" pn="GW5AT-LV60PG484AC1/I0">gw5at60b-002</Device>
+    <Device name="GW5AST-138B" pn="GW5AST-LV138FPG676AC1/I0">gw5ast138b-007</Device>
     <FileList>
         <File path="src/async_reset.v" type="file.verilog" enable="1"/>
         <File path="src/char_buffer.v" type="file.verilog" enable="1"/>
@@ -35,16 +35,19 @@
         <File path="src/misc/sysctrl.v" type="file.verilog" enable="1"/>
         <File path="src/misc/video.v" type="file.verilog" enable="1"/>
         <File path="src/misc/video_analyzer.v" type="file.verilog" enable="1"/>
+        <File path="src/misc/ws2812.v" type="file.verilog" enable="1"/>
         <File path="src/simple_register.v" type="file.verilog" enable="1"/>
         <File path="src/sync_signal.v" type="file.verilog" enable="1"/>
+        <File path="src/tang/mega138kpro/pll_init.v" type="file.verilog" enable="1"/>
         <File path="src/uart.v" type="file.verilog" enable="1"/>
         <File path="src/uart_rx.v" type="file.verilog" enable="1"/>
         <File path="src/uart_tx.v" type="file.verilog" enable="1"/>
         <File path="src/video_generator.v" type="file.verilog" enable="1"/>
         <File path="src/vt52.v" type="file.verilog" enable="1"/>
-        <File path="src/tang/console60k/bl616monitor.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/tang/console60k/gowin_rpll_126mhz.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/tang/console60k/bl616monitor.cst" type="file.cst" enable="1"/>
+        <File path="src/tang/mega138kpro/bl616monitor.vhd" type="file.vhdl" enable="1"/>
+        <File path="src/tang/mega138kpro/gowin_pll_126mhz.vhd" type="file.vhdl" enable="1"/>
+        <File path="src/tang/mega138kpro/gowin_pll_126mhz_mod.vhd" type="file.vhdl" enable="1"/>
+        <File path="src/tang/mega138kpro/bl616monitor.cst" type="file.cst" enable="1"/>
         <File path="mem/empty.hex" type="file.other" enable="1"/>
         <File path="mem/terminus_816_latin1.hex" type="file.other" enable="1"/>
     </FileList>

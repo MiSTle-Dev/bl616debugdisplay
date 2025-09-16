@@ -5,7 +5,7 @@
 --Part Number: GW2AR-LV18QN88C8/I7
 --Device: GW2AR-18
 --Device Version: C
---Created Time: Thu Aug 21 21:12:57 2025
+--Created Time: Mon Sep 15 19:48:12 2025
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -14,6 +14,7 @@ entity Gowin_rPLL_126mhz is
     port (
         clkout: out std_logic;
         lock: out std_logic;
+        clkoutd: out std_logic;
         clkin: in std_logic
     );
 end Gowin_rPLL_126mhz;
@@ -21,7 +22,6 @@ end Gowin_rPLL_126mhz;
 architecture Behavioral of Gowin_rPLL_126mhz is
 
     signal clkoutp_o: std_logic;
-    signal clkoutd_o: std_logic;
     signal clkoutd3_o: std_logic;
     signal gw_gnd: std_logic;
     signal FBDSEL_i: std_logic_vector(5 downto 0);
@@ -93,9 +93,9 @@ begin
             DYN_IDIV_SEL => "false",
             IDIV_SEL => 2,
             DYN_FBDIV_SEL => "false",
-            FBDIV_SEL => 13,
+            FBDIV_SEL => 27,
             DYN_ODIV_SEL => "false",
-            ODIV_SEL => 4,
+            ODIV_SEL => 2,
             PSDA_SEL => "0000",
             DYN_DA_EN => "false",
             DUTYDA_SEL => "1000",
@@ -115,7 +115,7 @@ begin
             CLKOUT => clkout,
             LOCK => lock,
             CLKOUTP => clkoutp_o,
-            CLKOUTD => clkoutd_o,
+            CLKOUTD => clkoutd,
             CLKOUTD3 => clkoutd3_o,
             RESET => gw_gnd,
             RESET_P => gw_gnd,
