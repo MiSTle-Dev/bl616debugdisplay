@@ -1,11 +1,13 @@
 # Tang onboard BL616 Debug Console Display
 
-This special Core is intended exclusively for the [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion) firmware running on the Tang **onboard** BL616 µC use case.
+This special Core is intended exclusively for the [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion) firmware running on the Tang integrated **onboard** BL616 MPU use case.
 
 It's a tool to display the debug console running at 2M Baud on a HDMI Monitor like a [VT52 Terminal](https://en.wikipedia.org/wiki/VT52) and communicate via Shell.  
 It might be useful to debug USB Hub or USB HID detect / compatibility issues.  
 
-By the way, you could also connect RX / TX pin of a USB-UART adapter + Putty or mincom to get identical results if you have one. This project is intended for users who don't have such USB-UART adapter at hand.  
+By the way, you could also connect RX / TX pin of a USB-UART adapter + Putty or mincom to get identical results if you have one. See [UART adapter](#external-uart-adapter). This project is intended for users who don't have such USB-UART adapter at hand.  
+
+It can be used also as template for Terminal based retro projects.  
 
 **Prerequiste**  
 You need to have [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion/releases) for onboard BL616 µC installed on you Tang board.
@@ -30,14 +32,21 @@ Press Tang Button S1 to open OSD.
 
 ![bl616](\.assets/bl616_debug.png) 
 
+# external UART adapter
+
+|Signal     |TN20k| TP25k    |TM60k|TM138k Pro|Console 60k/138k|
+|   -       |-    |  -       | -   | -        |-               |
+|UART TX out|48   |L6 USB-A +|tbd  |B21       |R14             |
+|UART RX in |55   |N/A       |tbd  |C21       |P14             |
+
 # Primer 25k
-UART TX monitoring port is connected to USB-A positive pin.  
-There is no UART RX monitoring port available.  
+UART TX monitoring port is connected to USB-A positive pin. There is no UART RX monitoring port available.  
 In order that BL616 can receive on uart console there are HW modifications needed:  
 
-* Capacitor C22 need to be removed to avoid signal integrity issues.  
-* USB-A negative pin need to to be connected to the now freed C22 landing pad signal side. By that an extra connection in between FPGA and BL616 MPU is established while the middle PMOD is still available for two Dualshock 2 gamepads or an retro D9 Joystick.
+* Dock capacitor C22 need to be removed to avoid signal integrity issues.  
+* USB-A negative pin need to to be connected to the now freed C22 landing pad signal side. By that an extra connection in between FPGA and BL616 MPU is established (while the middle PMOD is still available for two Dualshock 2 gamepads or an retro D9 Joystick).
 
 # Credits
+
 Uses sources from [VT52](https://github.com/AndresNavarro82/vt52-fpga)
 
