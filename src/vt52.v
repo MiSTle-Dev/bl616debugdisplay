@@ -14,7 +14,7 @@ module vt52 (
             input  rxd,
             output txd
             );
-   localparam ROWS = 25;
+   localparam ROWS = 24;
    localparam COLS = 80;
    localparam ROW_BITS = 5;
    localparam COL_BITS = 7;
@@ -39,6 +39,8 @@ module vt52 (
    wire [ADDR_BITS-1:0] char_address;
    wire [7:0] char;
    // char rom
+   wire graphic_mode_state;
+   wire graphic_mode;
    wire [11:0] char_rom_address;
    wire [7:0] char_rom_data;
 
@@ -52,7 +54,7 @@ module vt52 (
 
    // led follows the cursor blink
    assign led = cursor_blink_on;
-
+   assign graphic_mode_state = graphic_mode;
    keyboard keyboard(.clk(clk),
                      .reset(~pll_lock),
                      .usb_kbd(usb_kbd),
@@ -87,16 +89,22 @@ module vt52 (
                            .waddr(new_char_address),
                            .wen(new_char_wen),
                            .raddr(char_address),
-                           .dout(char)
+                           .dout(char),
+                           .graphic_mode(graphic_mode)
                            );
 
    char_rom char_rom(.clk(clk),
                      .addr(char_rom_address),
                      .dout(char_rom_data)
+//                   .graphic_mode(graphic_mode)
                      );
 
-   video_generator video_generator(
-                      .clk(clk_pixel),
+   video_generator #( .ROWS(ROWS),
+                      .COLS(COLS),
+                      .ROW_BITS(ROW_BITS),
+                      .COL_BITS(COL_BITS),
+                      .ADDR_BITS(ADDR_BITS))
+   video_generator(   .clk(clk_pixel),
                       .reset(~pll_lock),
                       .hsync(hsync),
                       .vsync(vsync),
@@ -110,7 +118,8 @@ module vt52 (
                       .char_buffer_address(char_address),
                       .char_buffer_data(char),
                       .char_rom_address(char_rom_address),
-                      .char_rom_data(char_rom_data)
+                      .char_rom_data(char_rom_data),
+                      .graphic_mode_state(graphic_mode)
                       );
 
    wire uart_rxd_int;
@@ -197,7 +206,8 @@ always @(posedge uart_clk) begin
                       .new_char_wen(new_char_wen),
                       .new_cursor_x(new_cursor_x),
                       .new_cursor_y(new_cursor_y),
-                      .new_cursor_wen(new_cursor_wen)
+                      .new_cursor_wen(new_cursor_wen),
+                      .graphic_mode(graphic_mode)
                       );
 
  endmodule

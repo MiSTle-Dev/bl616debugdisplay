@@ -2,6 +2,13 @@
  * 80x24 char generator (8x16 char size) & sync generator
  */
 module video_generator
+  #(parameter ROWS = 24,
+    parameter COLS = 80,
+    parameter ROW_BITS = 5,
+    parameter COL_BITS = 7,
+    parameter ADDR_BITS = 11
+    // first address outside the visible area
+    )
    (input clk,
     input reset,
     // video output
@@ -12,19 +19,20 @@ module video_generator
     output reg hblank,
     output reg vblank,
     // cursor
-    input  [7-1:0] cursor_x,
-    input  [5-1:0] cursor_y,
-    input  cursor_blink_on,
+    input [COL_BITS-1:0] cursor_x,
+    input [ROW_BITS-1:0] cursor_y,
+    input cursor_blink_on,
     // scrolling
-    input  [11-1:0] first_char,
+    input [ADDR_BITS-1:0] first_char,
     // char buffer
-    output  [11-1:0] char_buffer_address,
-    input  [7:0] char_buffer_data,
+    output wire [ADDR_BITS-1:0] char_buffer_address,
+    input [7:0] char_buffer_data,
     // char rom
-    output  [11:0] char_rom_address,
-    input  [7:0] char_rom_data
+    output wire [11:0] char_rom_address,
+    input [7:0] char_rom_data,
+    input graphic_mode_state
     );
-   localparam PAST_LAST_ROW = 25 * 80;
+   localparam PAST_LAST_ROW = ROWS * COLS;
    localparam hbits = 10;
    localparam hpixels = 799;
    localparam hbp = 48;
@@ -58,19 +66,19 @@ module video_generator
    // syncs and blanks
    reg next_hblank, next_vblank, next_hsync, next_vsync;
    // character generation
-   reg [5-1:0] row, next_row;
-   reg [7-1:0] col, next_col;
-   // these count the 24 and 80 of pixels inside a char (8x16)
+   reg [ROW_BITS-1:0] row, next_row;
+   reg [COL_BITS-1:0] col, next_col;
+   // these count the rows and cols of pixels inside a char (8x16)
    reg [2:0] colc, next_colc;
    reg [3:0] rowc, next_rowc;
    // maintain the next address to the char buffer
-   reg [11-1:0] char, next_char;
+   reg [ADDR_BITS-1:0] char, next_char;
 
    // we must use next_char instead of char because we need it ready for
    // the next clock cycle
    assign char_buffer_address = next_char;
    // The address of the char row in rom is formed with the char and the row offset
-   // we can get away with the addition here because the number of 24
+   // we can get away with the addition here because the number of rows
    // in this font is a power of 2 (16 in this case)
    assign char_rom_address = { char_buffer_data, rowc };
 
@@ -164,7 +172,7 @@ module video_generator
             else begin
                // we are still on the same row, so
                // go back to the first char in this line
-               next_char = char - 80;
+               next_char = char - COLS;
                next_rowc = rowc + 1;
             end
          end
