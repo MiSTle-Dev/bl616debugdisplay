@@ -13,7 +13,7 @@ port(
     tmds_d_p        : out std_logic_vector(2 downto 0);
     tmds_d_n        : out std_logic_vector(2 downto 0);
     uart_rx         : in std_logic; -- from BL616
-    uart_tx         : out std_logic; -- to BL616
+    --uart_tx         : out std_logic; -- to BL616
     spi_sclk        : in std_logic;
     spi_csn         : in std_logic;
     spi_dir         : out std_logic;
@@ -23,8 +23,8 @@ port(
     sd_cmd          : inout std_logic;
     sd_dat          : inout std_logic_vector(3 downto 0);
     -- monitor port
-    bl616_mon_tx    : out std_logic;
-    bl616_mon_rx    : in std_logic;
+  --bl616_mon_tx    : out std_logic;
+  --bl616_mon_rx    : in std_logic;
     ws2812          : out std_logic
     );
 end bl616monitor;
@@ -85,11 +85,6 @@ component CLKDIV
 end component;
 
 begin
-
-  -- BL616 console to hw pins for external USB-UART adapter
-  uart_tx <= bl616_mon_rx and uart_tx_terminal;
-  bl616_mon_tx <= uart_rx;
-
   spi_io_din  <= spi_dat;
   spi_io_ss   <= spi_csn;
   spi_io_clk  <= spi_sclk;
@@ -289,7 +284,7 @@ port map (
     usb_kbd     => usb_kbd,
     kbd_strobe  => kbd_strobe,
     rxd         => uart_rx,
-    txd         => uart_tx_terminal
+    txd         => open
 );
 
 videoG  <= "1111" when videoG0 = '1' else "0000";
