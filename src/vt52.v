@@ -38,6 +38,8 @@ module vt52 (
    wire new_char_wen;
    wire [ADDR_BITS-1:0] char_address;
    wire [7:0] char;
+   wire graphic_character;
+   wire graphic_mode;
    // char rom
    wire [11:0] char_rom_address;
    wire [7:0] char_rom_data;
@@ -109,12 +111,15 @@ module vt52 (
                            .waddr(new_char_address),
                            .wen(new_char_wen),
                            .raddr(char_address),
-                           .dout(char)
+                           .dout(char),
+                           .graphic_mode(graphic_mode),
+                           .graphic_character(graphic_character)
                            );
 
    char_rom char_rom(.clk(clk),
                      .addr(char_rom_address),
-                     .dout(char_rom_data)
+                     .dout(char_rom_data),
+                     .graphic_character(graphic_character)
                      );
 
    video_generator video_generator(
@@ -204,6 +209,7 @@ module vt52 (
                       .reply_data(reply_data),
                       .reply_valid(reply_valid),
                       .reply_ready(reply_ready),
+                      .graphic_mode(graphic_mode),
                       .new_first_char(new_first_char),
                       .new_first_char_wen(new_first_char_wen),
                       .new_char(new_char),

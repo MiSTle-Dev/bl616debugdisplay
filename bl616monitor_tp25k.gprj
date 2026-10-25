@@ -49,5 +49,6 @@
         <File path="src/tang/tp25k/bl616monitor.cst" type="file.cst" enable="1"/>
         <File path="mem/empty.hex" type="file.other" enable="1"/>
         <File path="mem/terminus_816_latin1.hex" type="file.other" enable="1"/>
+        <File path="mem/vt52_graphics_816.hex" type="file.other" enable="1"/>
     </FileList>
 </Project>

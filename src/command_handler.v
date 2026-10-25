@@ -23,7 +23,8 @@ module command_handler
     output new_char_wen,
     output  [COL_BITS-1:0] new_cursor_x,
     output  [ROW_BITS-1:0] new_cursor_y,
-    output  new_cursor_wen
+    output  new_cursor_wen,
+    output reg graphic_mode
     );
 
    // XXX maybe ready should be registered? reg ready_q;
@@ -102,6 +103,7 @@ module command_handler
          new_col <= 0;
          new_addr <= 0;
          last_char_to_erase <= 0;
+         graphic_mode <= 0;
       end
       else begin
          if (reply_valid && reply_ready)
@@ -328,6 +330,14 @@ module command_handler
                       last_char_to_erase <= new_first_char_q == 0?
                                             LAST_ROW+(COLS-1): new_first_char_q-1;
                       state <= state_erase;
+                   end
+                   "F": begin
+                      graphic_mode <= 1;
+                      state <= state_char;
+                   end
+                   "G": begin
+                      graphic_mode <= 0;
+                      state <= state_char;
                    end
                    // escape
                    8'h1b: begin
