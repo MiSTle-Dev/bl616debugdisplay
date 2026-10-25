@@ -95,9 +95,9 @@ reg old_kbd_strobe_d;
          caps_lock_active <= 1;  // default caps lock active to get capital characters
          special_data <= 0;
       end
-      else if (valid && ready) begin
-         // as soon as data is transmitted, clear valid
-         valid <= 0;
+      else if (valid) begin
+         if (ready)
+            valid <= 0;
       end
       else begin
         old_kbd_strobe_d <= old_kbd_strobe;
@@ -197,6 +197,6 @@ reg old_kbd_strobe_d;
              end
           end
         endcase // case (state)
-      end // else: !if(valid && ready)
+      end // else: !if(valid)
    end // always @ (posedge clk)
 endmodule

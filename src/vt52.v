@@ -46,9 +46,31 @@ module vt52 (
    wire [7:0] uart_out_data;
    wire uart_out_valid;
 
-   reg [7:0] uart_in_data, uart_in_data_d,uart_in_data_d1;
-   reg uart_in_valid, uart_in_valid_d, uart_in_valid_d1;
+   wire [7:0] keyboard_data;
+   wire keyboard_valid, keyboard_ready;
+   wire [7:0] reply_data;
+   wire reply_valid, reply_ready;
+   wire tx_fifo_ready;
+   wire [7:0] uart_in_data;
+   wire uart_in_valid;
    wire uart_in_ready;
+
+   assign reply_ready = tx_fifo_ready;
+   assign keyboard_ready = tx_fifo_ready && !reply_valid;
+
+   fifo_async #(.DW(8), .EA(4))
+      tx_fifo (
+         .i_rstn(pll_lock),
+         .i_clk(clk),
+         .i_tready(tx_fifo_ready),
+         .i_tvalid(reply_valid || keyboard_valid),
+         .i_tdata(reply_valid ? reply_data : keyboard_data),
+         .o_rstn(pll_lock),
+         .o_clk(uart_clk),
+         .o_tready(uart_in_ready),
+         .o_tvalid(uart_in_valid),
+         .o_tdata(uart_in_data)
+      );
 
    // led follows the cursor blink
    assign led = cursor_blink_on;
@@ -57,9 +79,9 @@ module vt52 (
                      .reset(~pll_lock),
                      .usb_kbd(usb_kbd),
                      .kbd_strobe(kbd_strobe),
-                     .data(uart_in_data),
-                     .valid(uart_in_valid),
-                     .ready(1'b1) //uart_in_ready)
+                     .data(keyboard_data),
+                     .valid(keyboard_valid),
+                     .ready(keyboard_ready)
                    );
 
    cursor #(.ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS))
@@ -124,17 +146,6 @@ module vt52 (
       .out(uart_rxd_int)
    );
 
-reg strobe;
-
-always @(posedge uart_clk) begin
-   {uart_in_data_d1 , uart_in_data_d}  <= {uart_in_data_d , uart_in_data};
-   {uart_in_valid_d1, uart_in_valid_d} <= {uart_in_valid_d, uart_in_valid};
-
-    strobe <= 1'b0;
-    if (!uart_in_valid_d1 && uart_in_valid_d)
-          strobe <= 1'b1;
-    end
-
    wire fifo_full;
    uart uart(
       .clk(uart_clk),
@@ -144,7 +155,7 @@ always @(posedge uart_clk) begin
       .txd(txd),
        // uart pipeline in (keyboard->usb)
       .s_axis_tdata(uart_in_data),
-      .s_axis_tvalid(strobe),
+      .s_axis_tvalid(uart_in_valid),
       .s_axis_tready(uart_in_ready),
 
       // uart pipeline out
@@ -165,7 +176,7 @@ always @(posedge uart_clk) begin
 
    fifo_async #(
       .DW(8),
-      .EA(128))
+      .EA(7))
    fifo_async(
       .i_rstn(pll_lock),
       .i_clk(uart_clk),
@@ -190,6 +201,9 @@ always @(posedge uart_clk) begin
                       .data(fifo_data),
                       .valid(fifo_valid),
                       .ready(fifo_ready),
+                      .reply_data(reply_data),
+                      .reply_valid(reply_valid),
+                      .reply_ready(reply_ready),
                       .new_first_char(new_first_char),
                       .new_first_char_wen(new_first_char_wen),
                       .new_char(new_char),

@@ -1,52 +1,61 @@
-# Tang onboard BL616 Debug Console Display
+# Tang Onboard BL616 Debug Console Display
 
-This special Core is intended exclusively for the [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion) firmware running on the Tang integrated **onboard** BL616 MPU use case.
+This FPGA core is designed specifically for the [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion) firmware running on the **onboard BL616 microcontroller** of a Tang FPGA board.
 
-It's a tool to display the debug console running at 2M Baud on a HDMI Monitor like a [VT52 Terminal](https://en.wikipedia.org/wiki/VT52) and communicate via Shell.  
-It might be useful to debug USB Hub or USB HID detect / compatibility issues.  
+It displays the 2 Mbaud debug console on an HDMI monitor using a [VT52-style terminal](https://en.wikipedia.org/wiki/VT52) and supports interaction with the firmware's shell.
+It is useful for diagnosing USB hub and USB HID detection or compatibility issues.
 
-By the way, you could also connect RX / TX pin of a USB-UART adapter + Putty or mincom to get identical results if you have one. See [UART adapter](#external-uart-adapter). This project is intended for users who don't have such USB-UART adapter at hand.  
+Alternatively, you can access the console with a USB-UART adapter and a terminal program such as PuTTY or minicom. See [External UART adapter](#external-uart-adapter). This project is primarily intended for users who do not have a USB-UART adapter available.
 
-It can be used also as template for Terminal based retro projects.  
+The core can also serve as a template for terminal-based retro projects.
 
-**Prerequiste**  
-You need to have [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion/releases) for onboard BL616 µC installed on you Tang board.
+## Prerequisite
 
-Program the FPGA debug core that fit's to your Tang: bl616monitor_**xyz**.fs
+Install [FPGA-Companion](https://github.com/MiSTle-Dev/FPGA-Companion/releases) on your Tang board's onboard BL616 microcontroller.
 
-Just connect the Tang board via a power feedthrough USB Hub (or TN20k bare +5V / GND) and have **no** other USB devices connected !
+## Getting started
 
-You will get a green color VT52 Terminal on your Monitor with some FPGA-Companion debug messages.  
+Program the FPGA with the debug core that matches your Tang board: `bl616monitor_xyz.fs`.
 
-Connect a USB HID device like a Keyboard, Mouse, Joystick etc.  
-Each device shall generate a register message and show USB VID:PID etc.  
-You might need your mobile camera video function as messages arrive at tremendous speed and there is no scroll back.
+Power the Tang board through a USB hub with power pass-through, or supply the TN20K directly through its +5V and GND pins. Start with **no other USB devices connected**.
 
-A Joystick or Gamepad button/stick press will generate debug messages.  
-Keyboard / Mouse will not show any press/move message apart from initial registering.
+A green VT52-style terminal will appear on your HDMI monitor, displaying FPGA-Companion debug messages.
 
-You can enter with you keyboard commands like ``help`` or ``lsusb`` (lowercase)  
+The display uses 80 columns by 25 rows of 8x16-pixel characters (640x400 pixels).
 
-Press Tang Button S2 to observe µC at boot time.  
-Press Tang Button S1 to open OSD.  
+ANSI color/formatting sequences such as `ESC[0;33m` and `ESC[0m` are consumed
+without displaying their bytes; the display remains green. Other ANSI CSI
+sequences are also discarded, not executed.
 
-![bl616](\.assets/bl616_debug.png) 
+Connect a USB HID device, such as a keyboard, mouse, joystick, or gamepad.
+Each device should generate a registration message containing information such as its USB VID:PID.
+Messages can arrive very quickly, and the terminal has no scrollback buffer. Recording the screen with your phone can help you review them.
 
-# external UART adapter
+Joystick or gamepad button presses and stick movements generate debug messages.
+Keyboard and mouse activity does not generate debug messages beyond the initial device registration.
+
+Use the keyboard to enter shell commands such as `help` or `lsusb` in lowercase.
+
+- Press button **S2** to observe the microcontroller's boot messages.
+- Press button **S1** to open the on-screen display (OSD).
+
+![BL616 debug console](.assets/bl616_debug.png)
+
+## External UART adapter
 
 |Signal     |TN20k| TP25k    |TM60k|TM138k Pro|Console 60k/138k|
 |   -       |-    |  -       | -   | -        |-               |
 |UART TX out|48   |L6 USB-A +|tbd  |B21       |R14             |
 |UART RX in |55   |N/A       |tbd  |C21       |P14             |
 
-# Primer 25k
-UART TX monitoring port is connected to USB-A positive pin. There is no UART RX monitoring port available.  
-In order that BL616 can receive on uart console there are HW modifications needed:  
+## Primer 25K
 
-* Dock capacitor C22 need to be removed to avoid signal integrity issues.  
-* USB-A negative pin need to to be connected to the now freed C22 landing pad signal side. By that an extra connection in between FPGA and BL616 MPU is established (while the middle PMOD is still available for two Dualshock 2 gamepads or an retro D9 Joystick).
+The UART TX monitoring output is connected to the USB-A D+ pin. No UART RX monitoring input is available by default.
+To allow the BL616 to receive UART console input, the following hardware modifications are required:
 
-# Credits
+- Remove capacitor C22 from the dock to avoid signal integrity issues.
+- Connect the USB-A D- pin to the signal-side pad exposed by removing C22. This creates an additional connection between the FPGA and the BL616 microcontroller, while leaving the middle PMOD available for two DualShock 2 gamepads or a retro DB9 joystick.
 
-Uses sources from [VT52](https://github.com/AndresNavarro82/vt52-fpga)
+## Credits
 
+Uses source code from [vt52-fpga](https://github.com/AndresNavarro82/vt52-fpga).

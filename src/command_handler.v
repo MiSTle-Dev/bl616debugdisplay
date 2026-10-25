@@ -13,6 +13,9 @@ module command_handler
     input  [7:0] data,
     input  valid,
     output  ready,
+    output [7:0] reply_data,
+    output reply_valid,
+    input reply_ready,
     output [ADDR_BITS-1:0] new_first_char,
     output  new_first_char_wen,
     output  [7:0] new_char,
@@ -56,12 +59,18 @@ module command_handler
    localparam state_addr   = 8'b00010000;
    localparam state_cursor = 8'b00100000;
    localparam state_erase  = 8'b01000000;
+   localparam state_csi    = 8'b10000000;
 
    reg [7:0] state;
+   reg [1:0] reply_remaining;
 
    // if we are erasing part of the screen or moving the cursor
    // we can't receive new commands
-   assign ready = (state & (state_erase | state_cursor | state_addr)) == 0;
+   assign ready = (state & (state_erase | state_cursor | state_addr)) == 0 &&
+                  reply_remaining == 0;
+   assign reply_valid = reply_remaining != 0;
+   assign reply_data = reply_remaining == 3 ? 8'h1b :
+                       reply_remaining == 2 ? 8'h2f : 8'h4b;
    assign new_char = new_char_q;
    assign new_char_address = new_char_address_q;
    assign new_char_wen = new_char_wen_q;
@@ -88,12 +97,15 @@ module command_handler
          new_first_char_wen_q <= 0;
 
          state <= state_char;
+         reply_remaining <= 0;
          new_row <= 0;
          new_col <= 0;
          new_addr <= 0;
          last_char_to_erase <= 0;
       end
       else begin
+         if (reply_valid && reply_ready)
+            reply_remaining <= reply_remaining - 1'b1;
          // after one clock cycle we should turn these off
          if (new_char_wen_q) new_char_wen_q <= 0;
          if (new_cursor_wen_q) new_cursor_wen_q <= 0;
@@ -191,6 +203,9 @@ module command_handler
               end // case: state_char
               state_esc: begin
                  case (data)
+                   "[": begin
+                      state <= state_csi;
+                   end
                    // Basic cursor movement
                    // Esc-only, so no BS, LF & SPACE (covered before)
                    "B": begin
@@ -291,6 +306,11 @@ module command_handler
                       // "Y" received, expecting row & col
                       state <= state_row;
                    end
+                   "Z": begin
+                      // VT52 identification: ESC / K.
+                      reply_remaining <= 3;
+                      state <= state_char;
+                   end
                    // Screen erasure
                    "K": begin
                       // erase to end of line
@@ -320,6 +340,14 @@ module command_handler
                    end
                  endcase // case (data)
               end // case: state_esc
+              state_csi: begin
+                 // Discard ANSI parameters/intermediates and the final byte (e.g. 'm').
+                 if (data == 8'h1b)
+                    state <= state_esc;
+                 else if (data == 8'h18 || data == 8'h1a ||
+                          (data >= 8'h40 && data <= 8'h7e))
+                    state <= state_char;
+              end
               state_row: begin
                  // row received, now we need col
                  new_row <= (data >= 8'h20 && data < (8'h20 + ROWS))?
