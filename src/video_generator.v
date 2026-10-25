@@ -1,5 +1,5 @@
 /**
- * 80x24 char generator (8x16 char size) & sync generator
+ * 80x25 char generator (8x16 char size) & sync generator
  */
 module video_generator
    (input clk,
@@ -57,22 +57,39 @@ module video_generator
    reg [vbits-1:0] vc, next_vc;
    // syncs and blanks
    reg next_hblank, next_vblank, next_hsync, next_vsync;
-   // character generation
-   reg [5-1:0] row, next_row;
-   reg [7-1:0] col, next_col;
-   // these count the 24 and 80 of pixels inside a char (8x16)
-   reg [2:0] colc, next_colc;
-   reg [3:0] rowc, next_rowc;
-   // maintain the next address to the char buffer
-   reg [11-1:0] char, next_char;
+   wire active_pixel = !next_hblank && !next_vblank;
+   wire [9:0] pixel_x = active_pixel ? next_hc - 10'd48 : 10'd0;
+   wire [8:0] pixel_y = active_pixel ? next_vc - 9'd35 : 9'd0;
+   wire [6:0] col = pixel_x[9:3];
+   wire [4:0] row = pixel_y[8:4];
+   wire [2:0] colc = pixel_x[2:0];
+   wire [9:0] fetch_hc = hc >= 10'd797 ? hc - 10'd797 : hc + 10'd3;
+   wire [8:0] fetch_vc = hc >= 10'd797 ?
+                        (vc == vlines ? 9'd0 : vc + 9'd1) : vc;
+   wire fetch_active = fetch_hc >= hbp && fetch_hc < hbp + hvisible &&
+                       fetch_vc >= vbp && fetch_vc < vbp + vvisible;
+   wire [9:0] fetch_x = fetch_active ? fetch_hc - 10'd48 : 10'd0;
+   wire [8:0] fetch_y = fetch_active ? fetch_vc - 9'd35 : 9'd0;
+   wire [4:0] fetch_row = fetch_y[8:4];
+   wire [6:0] fetch_col = fetch_x[9:3];
+   reg [10:0] display_first_char;
+   wire [11:0] buffer_offset = {1'b0, display_first_char} +
+                              ({7'b0, fetch_row} << 6) +
+                              ({7'b0, fetch_row} << 4) + {5'b0, fetch_col};
+   wire [11:0] wrapped_address = buffer_offset >= PAST_LAST_ROW ?
+                                buffer_offset - 12'd2000 : buffer_offset;
 
-   // we must use next_char instead of char because we need it ready for
-   // the next clock cycle
-   assign char_buffer_address = next_char;
-   // The address of the char row in rom is formed with the char and the row offset
-   // we can get away with the addition here because the number of 24
-   // in this font is a power of 2 (16 in this case)
-   assign char_rom_address = { char_buffer_data, rowc };
+   reg [7:0] glyph_pixels;
+
+   // Prefetch two pixels early so both 2x-clocked memories settle even when
+   // clock edges coincide. Hold each glyph while fetching the following one.
+   assign char_buffer_address = wrapped_address[10:0];
+   assign char_rom_address = { char_buffer_data, fetch_y[3:0] };
+
+   always @(posedge clk) begin
+      if (reset || vblank)
+         display_first_char <= first_char;
+   end
 
    //
    // horizontal & vertical counters, syncs and blanks
@@ -112,90 +129,18 @@ module video_generator
    end
 
    //
-   // character generation
-   //
-   always @(posedge clk) begin
-      if (reset) begin
-         row <= 0;
-         col <= 0;
-         rowc <= 0;
-         colc <= 0;
-         char <= 0;
-      end
-      else begin
-         row <= next_row;
-         col <= next_col;
-         rowc <= next_rowc;
-         colc <= next_colc;
-         char <= next_char;
-      end
-   end
-
-   always @(*) begin
-      if (vblank) begin
-         next_row = 0;
-         next_rowc = 0;
-         next_col = 0;
-         next_colc = 0;
-         next_char = first_char;
-      end
-      // we need next_hblank here because we must detect the edge
-      // in hblank & prepare for the row
-      else if (next_hblank) begin
-         // some nice defaults
-         next_row = row;
-         next_rowc = rowc;
-         next_col = 0;
-         next_colc = 0;
-         next_char = char;
-
-         // only do this once per line (positive hblank edge)
-         if (hblank == 0) begin
-            if (rowc == 15) begin
-               // we are moving to the next row, so char
-               // is already set at the correct value, unless
-               // we reached the end of the buffer
-               next_row = row + 1;
-               next_rowc = 0;
-               if (char == PAST_LAST_ROW) begin
-                  next_char = 0;
-               end
-            end
-            else begin
-               // we are still on the same row, so
-               // go back to the first char in this line
-               next_char = char - 80;
-               next_rowc = rowc + 1;
-            end
-         end
-      end
-      else begin
-         // some nice defaults
-         next_row = row;
-         next_rowc = rowc;
-         next_col = col;
-         next_colc = colc+1;
-         next_char = char;
-
-         if (colc == 7) begin
-            // prepare to read next char (it takes two cycles,
-            // one to read from ram & one to read from rom)
-            // Since the memory bus runs at twice the pixel clock rate
-            // we can do it just at the last pixel
-            next_char = char+1;
-            // move to the next char
-            next_col = col+1;
-            next_colc = 0;
-         end
-      end // else: !if(next_hblank)
-   end // always @ (*)
-
-   //
    // pixel out (char & cursor combination)
    //
    always @(posedge clk) begin
-      if (reset) video <= video_off;
-      else video <= combined_pixel;
+      if (reset) begin
+         video <= video_off;
+         glyph_pixels <= 0;
+      end
+      else begin
+         video <= combined_pixel;
+         if (active_pixel && colc == 0)
+            glyph_pixels <= char_rom_data;
+      end
    end
 
    always @(*) begin
@@ -203,8 +148,8 @@ module video_generator
       is_under_cursor = (cursor_x == col) & (cursor_y == row);
       cursor_pixel = is_under_cursor & cursor_blink_on;
       // char pixel: read from the appropiate char, row & col on the font ROM,
-      // the pixels LSB->MSB ordered
-      char_pixel = char_rom_data[7 - colc];
+      // Font pixels are ordered MSB first.
+      char_pixel = colc == 0 ? char_rom_data[7] : glyph_pixels[7 - colc];
       // combine, but only emit video on non-blanking periods
       combined_pixel = (next_hblank || next_vblank)?
                        video_off :
